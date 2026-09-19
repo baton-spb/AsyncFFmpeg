@@ -7,7 +7,7 @@ name = "async-ffmpeg"
 version = "0.1.0"
 description = "Production-ready, strictly typed async wrapper for FFmpeg and FFprobe"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 license = "MIT"
 keywords = ["ffmpeg", "ffprobe", "async", "asyncio", "video", "audio", "transcode", "streaming"]
 authors = [
@@ -20,6 +20,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Video",
@@ -45,10 +48,10 @@ async-yt-dlp = { path = "../AsyncYTDLP" }
 
 
 [project.urls]
-Homepage = "http://localhost:3000/6aton/AsyncFFmpeg"
-Documentation = "http://localhost:3000/6aton/AsyncFFmpeg#readme"
-Repository = "ssh://git@localhost:2222/6aton/AsyncFFmpeg.git"
-Issues = "http://localhost:3000/6aton/AsyncFFmpeg/issues"
+Homepage = "https://github.com/baton-spb/AsyncFFmpeg"
+Documentation = "https://github.com/baton-spb/AsyncFFmpeg#readme"
+Repository = "https://github.com/baton-spb/AsyncFFmpeg.git"
+Issues = "https://github.com/baton-spb/AsyncFFmpeg/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/async_ffmpeg"]

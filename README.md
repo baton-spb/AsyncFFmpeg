@@ -1,11 +1,12 @@
 # async-ffmpeg
 
-[![CI](http://localhost:3000/6aton/AsyncFFmpeg/actions/workflows/ci.yml/badge.svg)](http://localhost:3000/6aton/AsyncFFmpeg/actions)
-[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/baton-spb/AsyncFFmpeg/actions/workflows/ci.yml/badge.svg)](https://github.com/baton-spb/AsyncFFmpeg/actions)
+[![PyPI version](https://img.shields.io/pypi/v/async-ffmpeg.svg)](https://pypi.org/project/async-ffmpeg/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Typing: Typed](https://img.shields.io/badge/typing-typed-green.svg)](https://peps.python.org/pep-0561/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**async-ffmpeg** — современная, строго типизированная, production-ready асинхронная библиотека-обёртка над `ffmpeg` и `ffprobe` для Python 3.14+.
+**async-ffmpeg** — современная, строго типизированная, production-ready асинхронная библиотека-обёртка над `ffmpeg` и `ffprobe` для Python 3.11+.
 
 Она построена непосредственно поверх `asyncio.create_subprocess_exec()` без сторонних C-библиотек, без устаревших binding-ов и с **нулевыми зависимостями времени выполнения** (zero runtime dependencies, только стандартная библиотека Python).
 
