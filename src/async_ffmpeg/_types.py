@@ -3,7 +3,10 @@
 import os
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from async_ffmpeg.progress import ProgressInfo
 
 # Псевдонимы путей файловой системы (PEP 695 type syntax)
 type PathLike = str | os.PathLike[str] | Path
@@ -52,7 +55,9 @@ type StreamType = Literal[
 ]
 
 # Коллбэки для отслеживания прогресса и потока stderr
-type ProgressCallback = Callable[[Any], None] | Callable[[Any], Awaitable[None]]
+type ProgressCallback = (
+    Callable[["ProgressInfo"], None] | Callable[["ProgressInfo"], Awaitable[None]]
+)
 type StderrCallback = Callable[[str], None] | Callable[[str], Awaitable[None]]
 
 

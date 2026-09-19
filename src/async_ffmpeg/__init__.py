@@ -51,6 +51,7 @@ from async_ffmpeg.exceptions import (
     InvalidInputError,
 )
 from async_ffmpeg.process import ProcessResult, ProcessRunner
+from async_ffmpeg.progress import ProgressInfo, ProgressParser, parse_progress_stream
 
 __all__ = [
     "DEFAULT_AUDIO_BITRATE",
@@ -80,6 +81,8 @@ __all__ = [
     "ProcessResult",
     "ProcessRunner",
     "ProgressCallback",
+    "ProgressInfo",
+    "ProgressParser",
     "StderrCallback",
     "StreamType",
     "VideoPreset",
@@ -94,5 +97,6 @@ __all__ = [
     "get_ffmpeg_info",
     "get_ffprobe_info",
     "normalize_path_for_ffmpeg",
+    "parse_progress_stream",
     "terminate_process_gracefully",
 ]
