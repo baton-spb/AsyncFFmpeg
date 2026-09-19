@@ -89,7 +89,7 @@ ytdlp = [
 
 [package.metadata]
 requires-dist = [
-    { name = "async-yt-dlp", marker = "extra == 'ytdlp'", directory = "../AsyncYT-DLP" },
+    { name = "async-yt-dlp", marker = "extra == 'ytdlp'", directory = "../AsyncYTDLP" },
     { name = "coverage", marker = "extra == 'dev'", specifier = ">=7.6.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
@@ -101,7 +101,7 @@ provides-extras = ["ytdlp", "dev"]
 [[package]]
 name = "async-yt-dlp"
 version = "0.1.0"
-source = { directory = "../AsyncYT-DLP" }
+source = { directory = "../AsyncYTDLP" }
 dependencies = [
     { name = "graphifyy" },
     { name = "yt-dlp" },
