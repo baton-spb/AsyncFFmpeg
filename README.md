@@ -1,6 +1,6 @@
 # aio-ffmpeg
 
-[![CI](https://github.com/baton-spb/AsyncFFmpeg/actions/workflows/ci.yml/badge.svg)](https://github.com/baton-spb/AsyncFFmpeg/actions)
+[![CI](https://github.com/baton-spb/aio-ffmpeg/actions/workflows/ci.yml/badge.svg)](https://github.com/baton-spb/aio-ffmpeg/actions)
 [![PyPI version](https://img.shields.io/pypi/v/aio-ffmpeg.svg)](https://pypi.org/project/aio-ffmpeg/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Typing: Typed](https://img.shields.io/badge/typing-typed-green.svg)](https://peps.python.org/pep-0561/)

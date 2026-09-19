@@ -48,13 +48,13 @@ async-yt-dlp = { path = "../AsyncYTDLP" }
 
 
 [project.urls]
-Homepage = "https://github.com/baton-spb/AsyncFFmpeg"
-Documentation = "https://github.com/baton-spb/AsyncFFmpeg#readme"
-Repository = "https://github.com/baton-spb/AsyncFFmpeg.git"
-Issues = "https://github.com/baton-spb/AsyncFFmpeg/issues"
+Homepage = "https://github.com/baton-spb/aio-ffmpeg"
+Documentation = "https://github.com/baton-spb/aio-ffmpeg#readme"
+Repository = "https://github.com/baton-spb/aio-ffmpeg.git"
+Issues = "https://github.com/baton-spb/aio-ffmpeg/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/async_ffmpeg", "src/aio_ffmpeg"]
+packages = ["src/aio_ffmpeg", "src/async_ffmpeg"]
 
 [tool.ruff]
 target-version = "py314"
