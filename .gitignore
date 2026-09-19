@@ -61,6 +61,7 @@ graphify-out/
 *.txt
 !requirements*.txt
 !docs/**/*.txt
+output_examples/
 
 # IDE / Editor
 .idea/

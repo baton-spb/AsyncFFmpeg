@@ -98,6 +98,12 @@ class VideoStream(BaseStream):
         """Разрешение видео в виде кортежа (ширина, высота)."""
         return (self.width, self.height)
 
+    @property
+    def fps(self) -> float:
+        """Частота кадров видеопотока (алиас для frame_rate)."""
+        return self.frame_rate
+
+
 
 @dataclass(frozen=True, slots=True)
 class AudioStream(BaseStream):
@@ -233,3 +239,19 @@ class MediaInfo:
     def format_name(self) -> str:
         """Название формата/контейнера медиафайла."""
         return self.format.format_name
+
+
+@dataclass(frozen=True, slots=True)
+class SilenceInterval:
+    """Интервал тишины, обнаруженный фильтром silencedetect.
+
+    Attributes:
+        start: Время начала тишины в секундах.
+        end: Время окончания тишины в секундах.
+        duration: Длительность интервала тишины в секундах.
+    """
+
+    start: float
+    end: float
+    duration: float
+

@@ -14,6 +14,7 @@
 - Асинхронного контекстного менеджера (async with FFmpegClient())
 """
 
+import re
 import tempfile
 from collections.abc import Sequence
 from contextlib import suppress
@@ -24,7 +25,7 @@ from typing import TYPE_CHECKING, Self
 if TYPE_CHECKING:
     from async_ffmpeg.pipeline import MediaPipeline
 
-from async_ffmpeg._compat import normalize_path_for_ffmpeg
+from async_ffmpeg._compat import get_null_device, normalize_path_for_ffmpeg
 from async_ffmpeg._constants import (
     DEFAULT_AUDIO_BITRATE,
     DEFAULT_MAX_CONCURRENT,
@@ -44,9 +45,14 @@ from async_ffmpeg.command import FFmpegCommand
 from async_ffmpeg.exceptions import InvalidInputError
 from async_ffmpeg.filters import Filter, FilterChain, FilterGraph, loudnorm, scale
 from async_ffmpeg.hardware import HardwareAccel
-from async_ffmpeg.models import MediaInfo
+from async_ffmpeg.models import MediaInfo, SilenceInterval
 from async_ffmpeg.probe import FFprobe
 from async_ffmpeg.process import ProcessResult, ProcessRunner
+
+_RE_SILENCE_START = re.compile(r"silence_start:\s*(-?[\d\.]+)")
+_RE_SILENCE_END = re.compile(
+    r"silence_end:\s*(-?[\d\.]+)\s*\|\s*silence_duration:\s*(-?[\d\.]+)"
+)
 
 
 class FFmpegClient:
@@ -435,8 +441,9 @@ class FFmpegClient:
 
             lines: list[str] = []
             for inp in inputs:
-                # В demuxer пути должны быть с прямыми слэшами и экранированными одинарными кавычками
-                clean_path = normalize_path_for_ffmpeg(inp).replace("'", "'\\''")
+                # В demuxer пути должны быть абсолютными, с прямыми слэшами и экранированными кавычками
+                resolved_path = Path(inp).resolve()
+                clean_path = normalize_path_for_ffmpeg(resolved_path).replace("'", "'\\''")
                 lines.append(f"file '{clean_path}'")
 
             tmp_file.write_text("\n".join(lines), encoding="utf-8")
@@ -709,3 +716,239 @@ class FFmpegClient:
             timeout=timeout or self._default_timeout,
             on_progress=on_progress,
         )
+
+    async def two_pass_transcode(
+        self,
+        input: PathLike,  # noqa: A002
+        output: PathLike,
+        *,
+        video_codec: str = "libx264",
+        bitrate: str = "2000k",
+        audio_codec: str = "aac",
+        audio_bitrate: str = DEFAULT_AUDIO_BITRATE,
+        preset: VideoPreset | str = DEFAULT_VIDEO_PRESET,
+        passlogfile: PathLike | None = None,
+        timeout: float | None = None,
+        on_progress: ProgressCallback | None = None,
+    ) -> ProcessResult:
+        """Выполняет двухпроходное кодирование (2-pass) для максимального качества при заданном битрейте.
+
+        Первый проход анализирует сложность сцен и генерирует статистику в лог-файл без записи звука.
+        Второй проход использует собранную статистику для оптимального распределения битрейта.
+
+        Args:
+            input: Путь к исходному медиафайлу.
+            output: Путь к целевому файлу с результатом.
+            video_codec: Кодек видео (по умолчанию 'libx264').
+            bitrate: Целевой битрейт видео (например, '2000k' или '4M').
+            audio_codec: Кодек аудио (по умолчанию 'aac').
+            audio_bitrate: Битрейт аудиопотока (по умолчанию DEFAULT_AUDIO_BITRATE).
+            preset: Пресет кодировщика.
+            passlogfile: Пользовательский префикс пути к файлам журнала проходов.
+            timeout: Таймаут на каждый проход в секундах.
+            on_progress: Функция обратного вызова для отслеживания прогресса (вызывается на обоих проходах).
+
+        Returns:
+            ProcessResult результата второго прохода кодирования.
+        """
+        temp_log_prefix: Path | None = None
+        if passlogfile is None:
+            temp_log_prefix = Path(tempfile.mktemp(dir=self._temp_dir, prefix="ffmpeg2pass_"))
+            log_prefix_str = normalize_path_for_ffmpeg(temp_log_prefix)
+        else:
+            log_prefix_str = normalize_path_for_ffmpeg(passlogfile)
+
+        total_duration = None
+        if on_progress:
+            total_duration = await self._resolve_duration_if_needed(input)
+
+        try:
+            # Первый проход: анализ видео и сбор статистики
+            cmd_pass1 = (
+                self.create_command()
+                .overwrite()
+                .input(input)
+                .video_codec(video_codec)
+                .video_bitrate(bitrate)
+                .output_option("-pass", 1)
+                .output_option("-passlogfile", log_prefix_str)
+                .preset(preset)
+                .no_audio()
+                .format("null")
+                .output(get_null_device())
+            )
+
+            res1 = await cmd_pass1.execute(
+                ffmpeg_path=self._ffmpeg_path or find_ffmpeg(),
+                process_runner=self._runner,
+                total_duration=total_duration,
+                timeout=timeout or self._default_timeout,
+                on_progress=on_progress,
+            )
+            if not res1.is_success:
+                return res1
+
+            # Второй проход: финальное кодирование с учетом статистики
+            cmd_pass2 = (
+                self.create_command()
+                .overwrite()
+                .input(input)
+                .video_codec(video_codec)
+                .video_bitrate(bitrate)
+                .output_option("-pass", 2)
+                .output_option("-passlogfile", log_prefix_str)
+                .preset(preset)
+                .audio_codec(audio_codec)
+                .audio_bitrate(audio_bitrate)
+                .output(output)
+            )
+
+            return await cmd_pass2.execute(
+                ffmpeg_path=self._ffmpeg_path or find_ffmpeg(),
+                process_runner=self._runner,
+                total_duration=total_duration,
+                timeout=timeout or self._default_timeout,
+                on_progress=on_progress,
+            )
+        finally:
+            if temp_log_prefix is not None:
+                parent_dir = temp_log_prefix.parent
+                prefix_name = temp_log_prefix.name
+                for log_file in parent_dir.glob(f"{prefix_name}*"):
+                    with suppress(OSError):
+                        log_file.unlink()
+
+    async def create_contact_sheet(
+        self,
+        input: PathLike,  # noqa: A002
+        output: PathLike,
+        *,
+        rows: int = 3,
+        cols: int = 4,
+        frame_interval: float | None = None,
+        width: int = 320,
+        timeout: float | None = None,
+    ) -> ProcessResult:
+        """Создает обзорную сетку кадров (contact sheet / storyboard) из видеофайла.
+
+        Масштабирует кадры до одинаковой ширины и компонует их в матрицу через фильтр `tile`.
+        Если frame_interval не указан, интервал между кадрами рассчитывается автоматически
+        на основе длительности видео и параметров сетки.
+
+        Args:
+            input: Исходный видеофайл.
+            output: Целевой файл изображения (JPG, PNG).
+            rows: Количество строк в сетке (по умолчанию 3).
+            cols: Количество столбцов в сетке (по умолчанию 4).
+            frame_interval: Интервал между кадрами в секундах. При None рассчитывается равномерно.
+            width: Ширина каждого отдельного кадра мозаики в пикселях.
+            timeout: Таймаут выполнения операции в секундах.
+
+        Returns:
+            ProcessResult с результатом выполнения команды FFmpeg.
+        """
+        step = frame_interval
+        if step is None or step <= 0:
+            total_tiles = max(1, rows * cols)
+            duration = await self._resolve_duration_if_needed(input)
+            step = duration / (total_tiles + 1) if duration and duration > 0 else 2.0
+
+        # Формируем цепочку фильтров: fps -> scale -> tile
+        fps_val = max(1.0 / step, 0.0001)
+        tile_filter = f"fps={fps_val:.4f},scale={width}:-1,tile={cols}x{rows}"
+
+        cmd = (
+            self.create_command()
+            .overwrite()
+            .input(input)
+            .video_filter(tile_filter)
+            .frames(1, "v")
+            .output(output)
+        )
+
+        return await cmd.execute(
+            ffmpeg_path=self._ffmpeg_path or find_ffmpeg(),
+            process_runner=self._runner,
+            timeout=timeout or self._default_timeout,
+        )
+
+    async def detect_silence(
+        self,
+        input: PathLike,  # noqa: A002
+        *,
+        noise_tolerance_db: float = -30.0,
+        min_duration: float = 0.5,
+        timeout: float | None = None,
+    ) -> list[SilenceInterval]:
+        """Обнаруживает интервалы тишины в звуковой дорожке медиафайла.
+
+        Применяет аудиофильтр `silencedetect` FFmpeg и анализирует stderr-лог для
+        формирования списка меток начала, окончания и длительности пауз.
+
+        Args:
+            input: Исходный медиафайл.
+            noise_tolerance_db: Порог шума в децибелах (например, -30.0 или -50.0). Сигналы тише порога считаются тишиной.
+            min_duration: Минимальная длительность тишины в секундах для ее фиксации.
+            timeout: Таймаут выполнения операции в секундах.
+
+        Returns:
+            Список интервалов SilenceInterval с временными метками обнаруженной тишины.
+        """
+        filter_str = f"silencedetect=noise={noise_tolerance_db}dB:d={min_duration}"
+
+        cmd = (
+            self.create_command()
+            .overwrite()
+            .loglevel("info")
+            .input(input)
+            .audio_filter(filter_str)
+            .no_video()
+            .no_subtitles()
+            .format("null")
+            .output(get_null_device())
+        )
+
+        result = await cmd.execute(
+            ffmpeg_path=self._ffmpeg_path or find_ffmpeg(),
+            process_runner=self._runner,
+            timeout=timeout or self._default_timeout,
+        )
+
+        intervals: list[SilenceInterval] = []
+        current_start: float | None = None
+
+        for line in result.stderr_text.splitlines():
+            start_match = _RE_SILENCE_START.search(line)
+            if start_match:
+                with suppress(ValueError):
+                    current_start = float(start_match.group(1))
+                continue
+
+            end_match = _RE_SILENCE_END.search(line)
+            if end_match:
+                with suppress(ValueError):
+                    end_val = float(end_match.group(1))
+                    dur_val = float(end_match.group(2))
+                    start_val = (
+                        current_start
+                        if current_start is not None
+                        else max(0.0, end_val - dur_val)
+                    )
+                    intervals.append(
+                        SilenceInterval(start=start_val, end=end_val, duration=dur_val)
+                    )
+                    current_start = None
+
+        if current_start is not None:
+            # Тишина продолжалась до конца файла
+            duration = await self._resolve_duration_if_needed(input)
+            if duration is not None and duration > current_start:
+                intervals.append(
+                    SilenceInterval(
+                        start=current_start,
+                        end=duration,
+                        duration=duration - current_start,
+                    )
+                )
+
+        return intervals

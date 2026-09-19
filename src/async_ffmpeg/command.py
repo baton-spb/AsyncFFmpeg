@@ -259,6 +259,20 @@ class FFmpegCommand:
         self._pending_output_options.append(("-r", str(rate)))
         return self
 
+    def frames(self, count: int, stream_type: str = "v") -> Self:
+        """Устанавливает лимит количества кадров для вывода (-vframes, -aframes).
+
+        Args:
+            count: Количество кадров.
+            stream_type: Тип потока ('v' для видео, 'a' для аудио).
+
+        Returns:
+            Экземпляр FFmpegCommand для цепочки вызовов.
+        """
+        opt = f"-{stream_type}frames"
+        self._pending_output_options.append((opt, str(count)))
+        return self
+
     def pixel_format(self, fmt: str) -> Self:
         """Устанавливает пиксельный формат (-pix_fmt)."""
         self._pending_output_options.append(("-pix_fmt", fmt))
