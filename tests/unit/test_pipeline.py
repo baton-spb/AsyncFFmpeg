@@ -259,3 +259,88 @@ async def test_pipeline_progress_tracking(tmp_path: Path) -> None:
     result = await pipeline.run(on_progress=on_prog)
     assert result.success
     assert len(progress_updates) > 0
+
+
+def test_pipeline_all_video_transforms() -> None:
+    """Проверяет вызовы crop, pad, blur, sharpen, drawtext, transpose."""
+    pipeline = (
+        MediaPipeline("in.mp4")
+        .crop(w=600, h=400, x=10, y=10)
+        .pad(w=800, h=600, color="blue")
+        .blur(radius=3)
+        .sharpen(luma_amount=1.5)
+        .transpose(direction=2)
+        .drawtext("Test Title", x=20, y=20, fontsize=24, fontcolor="white")
+        .output("out.mp4")
+    )
+    args = pipeline.build()
+    cmd_str = " ".join(args)
+
+    assert "crop=600:400:10:10" in cmd_str
+    assert "pad=800:600:(ow-iw)/2:(oh-ih)/2:blue" in cmd_str
+    assert "boxblur=3" in cmd_str
+    assert "unsharp=5:5:1.5" in cmd_str
+    assert "transpose=2" in cmd_str
+    assert "drawtext" in cmd_str
+    assert "Test Title" in cmd_str
+
+
+def test_pipeline_timing_and_inputs() -> None:
+    """Проверяет seek, duration, add_input."""
+    pipeline = MediaPipeline().add_input("video1.mp4").seek(15.5).duration(30.0).output("out.mp4")
+    args = pipeline.build()
+    cmd_str = " ".join(args)
+
+    assert "-ss 15.5" in cmd_str
+    assert "-t 30.0" in cmd_str
+    assert "-i video1.mp4" in cmd_str
+
+
+def test_pipeline_codecs_bitrates_subtitles_and_metadata() -> None:
+    """Проверяет bitrate, sample_rate, channels, no_subtitles, subtitle_codec, metadata, extra_args."""
+    pipeline = (
+        MediaPipeline("in.mkv")
+        .video_codec("libx265", preset="fast", crf=28, bitrate="2M")
+        .audio_codec("aac", bitrate="192k", sample_rate=48000, channels=2)
+        .no_subtitles()
+        .metadata("title", "Episode 1")
+        .extra_args("-movflags", "+faststart")
+        .map_stream("0:v:0")
+        .output("out.mp4")
+    )
+    args = pipeline.build()
+    cmd_str = " ".join(args)
+
+    assert "-c:v libx265" in cmd_str
+    assert "-preset fast" in cmd_str
+    assert "-crf 28" in cmd_str
+    assert "-b:v 2M" in cmd_str
+    assert "-c:a aac" in cmd_str
+    assert "-b:a 192k" in cmd_str
+    assert "-ar 48000" in cmd_str
+    assert "-ac 2" in cmd_str
+    assert "-sn" in cmd_str
+    assert "-metadata title=Episode 1" in cmd_str
+    assert "-movflags +faststart" in cmd_str
+    assert "-map 0:v:0" in cmd_str
+
+
+def test_pipeline_hwaccel_and_watermark_positions() -> None:
+    """Проверяет настройку аппаратного ускорения и разные позиции водяного знака."""
+    for pos, expected_expr in [
+        ("top-left", "15:15"),
+        ("bottom-left", "15:main_h-overlay_h-15"),
+        ("center", "(main_w-overlay_w)/2:(main_h-overlay_h)/2"),
+    ]:
+        pipe = (
+            MediaPipeline("in.mp4")
+            .hwaccel("cuda", device="0", output_format="cuda")
+            .watermark("logo.png", position=pos, margin=15)  # type: ignore[arg-type]
+            .output("out.mp4")
+        )
+        args = pipe.build()
+        cmd_str = " ".join(args)
+        assert "-hwaccel cuda" in cmd_str
+        assert "-hwaccel_device 0" in cmd_str
+        assert "-hwaccel_output_format cuda" in cmd_str
+        assert expected_expr in cmd_str

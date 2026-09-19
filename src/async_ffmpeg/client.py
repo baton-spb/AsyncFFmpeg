@@ -400,6 +400,8 @@ class FFmpegClient:
         output: PathLike,
         *,
         method: ConcatMethod = "demuxer",
+        has_video: bool = True,
+        has_audio: bool = True,
         timeout: float | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> ProcessResult:
@@ -456,14 +458,31 @@ class FFmpegClient:
                 cmd.input(inp)
 
             num_inputs = len(inputs)
-            stream_labels = "".join(f"[{i}:v][{i}:a]" for i in range(num_inputs))
-            concat_filter = f"{stream_labels}concat=n={num_inputs}:v=1:a=1[outv][outa]"
+            v_val = 1 if has_video else 0
+            a_val = 1 if has_audio else 0
+
+            stream_labels = ""
+            for i in range(num_inputs):
+                if has_video:
+                    stream_labels += f"[{i}:v]"
+                if has_audio:
+                    stream_labels += f"[{i}:a]"
+
+            out_labels = ""
+            if has_video:
+                out_labels += "[outv]"
+            if has_audio:
+                out_labels += "[outa]"
+
+            concat_filter = f"{stream_labels}concat=n={num_inputs}:v={v_val}:a={a_val}{out_labels}"
 
             cmd.complex_filter(concat_filter)
-            cmd.map_stream("[outv]")
-            cmd.video_codec("libx264")
-            cmd.map_stream("[outa]")
-            cmd.audio_codec("aac")
+            if has_video:
+                cmd.map_stream("[outv]")
+                cmd.video_codec("libx264")
+            if has_audio:
+                cmd.map_stream("[outa]")
+                cmd.audio_codec("aac")
             cmd.output(output)
 
             return await cmd.execute(
