@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "async-ffmpeg"
+name = "aio-ffmpeg"
 version = "0.1.0"
 description = "Production-ready, strictly typed async wrapper for FFmpeg and FFprobe"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-keywords = ["ffmpeg", "ffprobe", "async", "asyncio", "video", "audio", "transcode", "streaming"]
+keywords = ["ffmpeg", "ffprobe", "async", "asyncio", "aio", "video", "audio", "transcode", "streaming"]
 authors = [
     { name = "async-ffmpeg contributors" }
 ]
@@ -54,7 +54,7 @@ Repository = "https://github.com/baton-spb/AsyncFFmpeg.git"
 Issues = "https://github.com/baton-spb/AsyncFFmpeg/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/async_ffmpeg"]
+packages = ["src/async_ffmpeg", "src/aio_ffmpeg"]
 
 [tool.ruff]
 target-version = "py314"
