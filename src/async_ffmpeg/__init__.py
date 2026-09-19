@@ -50,6 +50,16 @@ from async_ffmpeg.exceptions import (
     FilterError,
     InvalidInputError,
 )
+from async_ffmpeg.models import (
+    AudioStream,
+    Chapter,
+    MediaFormat,
+    MediaInfo,
+    StreamDisposition,
+    SubtitleStream,
+    VideoStream,
+)
+from async_ffmpeg.probe import FFprobe, parse_probe_json
 from async_ffmpeg.process import ProcessResult, ProcessRunner
 from async_ffmpeg.progress import ProgressInfo, ProgressParser, parse_progress_stream
 
@@ -63,7 +73,9 @@ __all__ = [
     "DEFAULT_VIDEO_CRF",
     "DEFAULT_VIDEO_PRESET",
     "AsyncFFmpegError",
+    "AudioStream",
     "BinaryInfo",
+    "Chapter",
     "CodecNotFoundError",
     "CommandBuildError",
     "ConcatMethod",
@@ -72,10 +84,13 @@ __all__ = [
     "FFmpegNotFoundError",
     "FFmpegProcessError",
     "FFmpegTimeoutError",
+    "FFprobe",
     "FFprobeError",
     "FilterError",
     "InvalidInputError",
     "LogLevel",
+    "MediaFormat",
+    "MediaInfo",
     "MediaInputProtocol",
     "PathLike",
     "ProcessResult",
@@ -84,8 +99,11 @@ __all__ = [
     "ProgressInfo",
     "ProgressParser",
     "StderrCallback",
+    "StreamDisposition",
     "StreamType",
+    "SubtitleStream",
     "VideoPreset",
+    "VideoStream",
     "__version__",
     "clear_discovery_cache",
     "escape_filter_path",
@@ -97,6 +115,7 @@ __all__ = [
     "get_ffmpeg_info",
     "get_ffprobe_info",
     "normalize_path_for_ffmpeg",
+    "parse_probe_json",
     "parse_progress_stream",
     "terminate_process_gracefully",
 ]
