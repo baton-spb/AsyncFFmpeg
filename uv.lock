@@ -8,7 +8,7 @@ resolution-markers = [
 
 [[package]]
 name = "aio-ffmpeg"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -100,7 +100,7 @@ wheels = [
 
 [[package]]
 name = "async-yt-dlp"
-version = "0.1.0"
+version = "0.1.2"
 source = { directory = "../AsyncYTDLP" }
 dependencies = [
     { name = "yt-dlp" },
@@ -108,8 +108,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "async-ffmpeg", marker = "extra == 'ffmpeg'", directory = "." },
-    { name = "async-ffmpeg", marker = "extra == 'full'", directory = "." },
+    { name = "aio-ffmpeg", marker = "extra == 'ffmpeg'", directory = "." },
+    { name = "aio-ffmpeg", marker = "extra == 'full'", directory = "." },
     { name = "brotli", marker = "extra == 'full'", specifier = ">=1.0.0" },
     { name = "certifi", marker = "extra == 'full'", specifier = ">=2024.1.1" },
     { name = "coverage", marker = "extra == 'dev'", specifier = ">=7.6.0" },
