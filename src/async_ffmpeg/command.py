@@ -68,6 +68,7 @@ class FFmpegCommand:
         self._video_filter: str | None = None
         self._audio_filter: str | None = None
         self._complex_filter: str | None = None
+        self._pending_input_options: list[tuple[str, str | None]] = []
         self._pending_output_options: list[tuple[str, str | None]] = []
         self._overwrite: bool | None = None
         self._no_stdin: bool = True
@@ -122,6 +123,20 @@ class FFmpegCommand:
         self._global_options.append((opt_key, str(value) if value is not None else None))
         return self
 
+    def hwaccel(
+        self,
+        name: str,
+        device: str | None = None,
+        output_format: str | None = None,
+    ) -> Self:
+        """Настраивает аппаратное ускорение (-hwaccel) для следующего входного файла input()."""
+        self._pending_input_options.append(("-hwaccel", name))
+        if device is not None:
+            self._pending_input_options.append(("-hwaccel_device", str(device)))
+        if output_format is not None:
+            self._pending_input_options.append(("-hwaccel_output_format", str(output_format)))
+        return self
+
     # === Входы ===
 
     def input(self, target: PathLike | MediaInputProtocol, **opts: Any) -> Self:
@@ -131,7 +146,9 @@ class FFmpegCommand:
         else:
             str_target = normalize_path_for_ffmpeg(target)
 
-        input_opts: list[tuple[str, str | None]] = []
+        input_opts: list[tuple[str, str | None]] = list(self._pending_input_options)
+        self._pending_input_options.clear()
+
         for k, v in opts.items():
             opt_key = _format_option_key(k)
             if v is True:
