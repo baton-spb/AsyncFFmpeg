@@ -163,6 +163,8 @@ class ProcessRunner:
         async with self._semaphore:
             start_time = time.monotonic()
             process: asyncio.subprocess.Process | None = None
+            stdout_task: asyncio.Task[None] | None = None
+            stderr_task: asyncio.Task[None] | None = None
 
             try:
                 process = await asyncio.create_subprocess_exec(
@@ -220,11 +222,6 @@ class ProcessRunner:
                         timeout_seconds=effective_timeout or 0.0,
                         command=cmd_strs,
                     ) from err
-                except asyncio.CancelledError as err:
-                    await terminate_process_gracefully(process, timeout=effective_graceful_timeout)
-                    await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
-                    raise FFmpegCancelledError(command=cmd_strs) from err
-
                 exit_code = process.returncode if process.returncode is not None else -1
                 duration = time.monotonic() - start_time
                 stdout_bytes = b"".join(stdout_chunks)
@@ -247,7 +244,13 @@ class ProcessRunner:
                     )
 
                 return result
-
+            except asyncio.CancelledError as err:
+                if process is not None:
+                    await terminate_process_gracefully(process, timeout=effective_graceful_timeout)
+                tasks_to_cancel = [t for t in (stdout_task, stderr_task) if t is not None]
+                if tasks_to_cancel:
+                    await asyncio.gather(*tasks_to_cancel, return_exceptions=True)
+                raise FFmpegCancelledError(command=cmd_strs) from err
             finally:
                 if process is not None:
                     self._active_processes.discard(process)

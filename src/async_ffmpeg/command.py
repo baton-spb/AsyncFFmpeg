@@ -20,8 +20,11 @@ from async_ffmpeg._types import (
     VideoPreset,
 )
 from async_ffmpeg.exceptions import CommandBuildError
+from async_ffmpeg.filters import Filter, FilterChain, FilterGraph
 from async_ffmpeg.process import ProcessResult, ProcessRunner
 from async_ffmpeg.progress import ProgressParser
+
+type FilterLike = str | Filter | FilterChain | FilterGraph
 
 
 def _format_option_key(key: str) -> str:
@@ -141,17 +144,17 @@ class FFmpegCommand:
 
     # === Фильтры ===
 
-    def video_filter(self, filtergraph: str) -> Self:
+    def video_filter(self, filtergraph: FilterLike) -> Self:
         """Устанавливает простой видео-фильтр (-vf)."""
         self._video_filter = str(filtergraph)
         return self
 
-    def audio_filter(self, filtergraph: str) -> Self:
+    def audio_filter(self, filtergraph: FilterLike) -> Self:
         """Устанавливает простой аудио-фильтр (-af)."""
         self._audio_filter = str(filtergraph)
         return self
 
-    def complex_filter(self, filtergraph: str) -> Self:
+    def complex_filter(self, filtergraph: FilterLike) -> Self:
         """Устанавливает комплексный граф фильтров (-filter_complex)."""
         self._complex_filter = str(filtergraph)
         return self
@@ -222,6 +225,10 @@ class FFmpegCommand:
         """Добавляет сопоставление потока (-map)."""
         self._pending_output_options.append(("-map", stream_spec))
         return self
+
+    def map_stream(self, stream_spec: str) -> Self:
+        """Алиас для map(): добавляет сопоставление потока (-map)."""
+        return self.map(stream_spec)
 
     def no_video(self) -> Self:
         """Отключает запись видеопотока (-vn)."""

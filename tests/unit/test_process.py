@@ -111,7 +111,7 @@ async def test_process_runner_cancellation() -> None:
     cmd = [sys.executable, "-c", "import time; time.sleep(10)"]
 
     task = asyncio.create_task(runner.run(cmd))
-    await asyncio.sleep(0.05)
+    await asyncio.sleep(0.1)
     task.cancel()
 
     with pytest.raises(FFmpegCancelledError):
