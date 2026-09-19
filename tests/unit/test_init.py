@@ -19,4 +19,4 @@ def test_version_defined() -> None:
     """Проверяет наличие корректной версии пакета."""
     assert hasattr(async_ffmpeg, "__version__")
     assert isinstance(async_ffmpeg.__version__, str)
-    assert async_ffmpeg.__version__ == "0.1.0"
+    assert async_ffmpeg.__version__ == "0.1.1"

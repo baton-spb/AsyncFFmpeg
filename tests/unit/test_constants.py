@@ -4,7 +4,7 @@ from async_ffmpeg import _constants
 
 
 def test_constants_definitions() -> None:
-    assert _constants.__version__ == "0.1.0"
+    assert _constants.__version__ == "0.1.1"
     assert _constants.DEFAULT_FFMPEG_EXECUTABLE == "ffmpeg"
     assert _constants.DEFAULT_FFPROBE_EXECUTABLE == "ffprobe"
     assert _constants.DEFAULT_MAX_CONCURRENT == 4
