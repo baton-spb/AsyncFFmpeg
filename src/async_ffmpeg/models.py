@@ -222,3 +222,8 @@ class MediaInfo:
     def fps(self) -> float | None:
         """Частота кадров основного видеопотока или None."""
         return self.primary_video.frame_rate if self.primary_video else None
+
+    @property
+    def format_name(self) -> str:
+        """Название формата/контейнера медиафайла."""
+        return self.format.format_name

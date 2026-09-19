@@ -201,6 +201,22 @@ class FFmpegCommand:
         self._pending_output_options.append(("-c", codec))
         return self
 
+    def copy_video(self, stream_spec: str | None = None) -> Self:
+        """Копирует видеопоток без перекодирования (-c:v copy)."""
+        return self.video_codec("copy", stream_spec=stream_spec)
+
+    def copy_audio(self, stream_spec: str | None = None) -> Self:
+        """Копирует аудиопоток без перекодирования (-c:a copy)."""
+        return self.audio_codec("copy", stream_spec=stream_spec)
+
+    def copy_subtitles(self, stream_spec: str | None = None) -> Self:
+        """Копирует субтитры без перекодирования (-c:s copy)."""
+        return self.subtitle_codec("copy", stream_spec=stream_spec)
+
+    def copy_all(self) -> Self:
+        """Копирует все потоки без перекодирования (-c copy)."""
+        return self.codec("copy")
+
     def video_bitrate(self, bitrate: str | int, stream_spec: str | None = None) -> Self:
         """Устанавливает битрейт видео (-b:v)."""
         opt = f"-b:v:{stream_spec}" if stream_spec else "-b:v"
