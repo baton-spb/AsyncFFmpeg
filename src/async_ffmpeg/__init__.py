@@ -50,6 +50,7 @@ from async_ffmpeg.exceptions import (
     FilterError,
     InvalidInputError,
 )
+from async_ffmpeg.process import ProcessResult, ProcessRunner
 
 __all__ = [
     "DEFAULT_AUDIO_BITRATE",
@@ -76,6 +77,8 @@ __all__ = [
     "LogLevel",
     "MediaInputProtocol",
     "PathLike",
+    "ProcessResult",
+    "ProcessRunner",
     "ProgressCallback",
     "StderrCallback",
     "StreamType",
