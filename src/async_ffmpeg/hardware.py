@@ -15,8 +15,11 @@ from typing import Literal
 
 from async_ffmpeg._compat import IS_WINDOWS
 from async_ffmpeg._discovery import find_ffmpeg
+from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import PathLike
 from async_ffmpeg.process import ProcessRunner
+
+logger = get_logger("hardware")
 
 type HWAccelType = Literal[
     "cuda",
@@ -428,11 +431,18 @@ class HardwareAccel:
         accels = await self.get_available_accels(force_refresh=force_refresh)
         encoders = await self.get_available_encoders(force_refresh=force_refresh)
         decoders = await self.get_available_decoders(force_refresh=force_refresh)
-        return HardwareCapability(
+        cap = HardwareCapability(
             available_accels=accels,
             encoders=encoders,
             decoders=decoders,
         )
+        logger.info(
+            "Обнаружено аппаратное ускорение: %s (энкодеров: %d, декодеров: %d)",
+            ", ".join(accels) or "нет",
+            len(encoders),
+            len(decoders),
+        )
+        return cap
 
     async def test_encoder(self, encoder: str, *, timeout: float = 4.0) -> bool:
         """Проверяет фактическую работоспособность видеоэнкодера на текущем оборудовании.
@@ -443,6 +453,7 @@ class HardwareAccel:
         if encoder in self._verified_encoders:
             return self._verified_encoders[encoder]
 
+        logger.debug("Тестирование доступности энкодера '%s' на оборудовании...", encoder)
         ffmpeg_bin = self._resolve_ffmpeg()
         null_output = "NUL" if IS_WINDOWS else "/dev/null"
 
@@ -470,10 +481,16 @@ class HardwareAccel:
                 check=False,
             )
             is_working = result.success
-        except Exception:
+        except Exception as exc:
+            logger.debug("Тест энкодера '%s' завершился исключением: %s", encoder, exc)
             is_working = False
 
         self._verified_encoders[encoder] = is_working
+        logger.debug(
+            "Результат проверки энкодера '%s': %s",
+            encoder,
+            "работоспособен" if is_working else "не поддерживается",
+        )
         return is_working
 
     async def best_encoder(
@@ -503,6 +520,7 @@ class HardwareAccel:
         hw_candidates, sw_fallback = mapping
 
         if not prefer_hw:
+            logger.debug("Выбран процессорный энкодер для '%s': %s", codec, sw_fallback)
             return sw_fallback
 
         available_encoders = await self.get_available_encoders()
@@ -511,10 +529,21 @@ class HardwareAccel:
         for candidate in hw_candidates:
             if candidate in available_names:
                 if not verify_working:
+                    logger.info(
+                        "Выбран аппаратный энкодер для '%s': %s (без верификации)", codec, candidate
+                    )
                     return candidate
                 # Проверяем реальную работоспособность с установленными драйверами
                 if await self.test_encoder(candidate):
+                    logger.info(
+                        "Выбран проверенный аппаратный энкодер для '%s': %s", codec, candidate
+                    )
                     return candidate
 
         # Если ни один аппаратный кодек не подошел или не работает, возвращаем процессорный fallback
+        logger.info(
+            "Аппаратный энкодер для '%s' не найден/не поддерживается. Fallback на: %s",
+            codec,
+            sw_fallback,
+        )
         return sw_fallback

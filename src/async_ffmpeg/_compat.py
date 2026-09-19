@@ -158,4 +158,3 @@ def escape_filter_path(path: PathLike) -> str:
 def get_null_device() -> str:
     """Возвращает платформенное псевдоустройство отбрасывания данных (NUL на Windows, /dev/null на Unix)."""
     return "NUL" if IS_WINDOWS else "/dev/null"
-

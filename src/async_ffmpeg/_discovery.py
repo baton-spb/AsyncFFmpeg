@@ -17,8 +17,11 @@ from async_ffmpeg._constants import (
     ENV_FFMPEG_PATH,
     ENV_FFPROBE_PATH,
 )
+from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import PathLike
 from async_ffmpeg.exceptions import FFmpegNotFoundError
+
+logger = get_logger("discovery")
 
 _VERSION_REGEX = re.compile(
     r"(?:ffmpeg|ffprobe)\s+version\s+([a-zA-Z0-9.\-_:]+)",
@@ -111,13 +114,19 @@ def _find_binary_cached(binary_name: str, custom_path_str: str | None = None) ->
         p = Path(custom_path_str).expanduser()
         searched.append(str(p))
         if p.is_file():
-            return p.resolve()
+            resolved = p.resolve()
+            logger.debug("Исполняемый файл '%s' найден по явному пути: %s", binary_name, resolved)
+            return resolved
         if p.is_dir():
             for variant in binary_variants:
                 candidate = p / variant
                 searched.append(str(candidate))
                 if candidate.is_file():
-                    return candidate.resolve()
+                    resolved = candidate.resolve()
+                    logger.debug(
+                        "Исполняемый файл '%s' найден в директории: %s", binary_name, resolved
+                    )
+                    return resolved
 
     # 2. Проверка переменной окружения
     env_var_name = ENV_FFMPEG_PATH if "ffmpeg" in binary_name.lower() else ENV_FFPROBE_PATH
@@ -126,18 +135,31 @@ def _find_binary_cached(binary_name: str, custom_path_str: str | None = None) ->
         p_env = Path(env_val).expanduser()
         searched.append(f"{env_var_name}={env_val}")
         if p_env.is_file():
-            return p_env.resolve()
+            resolved = p_env.resolve()
+            logger.debug(
+                "Исполняемый файл '%s' найден через %s: %s", binary_name, env_var_name, resolved
+            )
+            return resolved
         if p_env.is_dir():
             for variant in binary_variants:
                 candidate = p_env / variant
                 searched.append(str(candidate))
                 if candidate.is_file():
-                    return candidate.resolve()
+                    resolved = candidate.resolve()
+                    logger.debug(
+                        "Исполняемый файл '%s' найден через %s: %s",
+                        binary_name,
+                        env_var_name,
+                        resolved,
+                    )
+                    return resolved
 
     # 3. Системный PATH
     found = shutil.which(binary_name)
     if found:
-        return Path(found).resolve()
+        resolved = Path(found).resolve()
+        logger.debug("Исполняемый файл '%s' найден в системном PATH: %s", binary_name, resolved)
+        return resolved
     searched.append(f"PATH (via which '{binary_name}')")
 
     # 4. Типовые директории установки платформы
@@ -146,8 +168,19 @@ def _find_binary_cached(binary_name: str, custom_path_str: str | None = None) ->
             candidate = candidate_dir / variant
             searched.append(str(candidate))
             if candidate.is_file():
-                return candidate.resolve()
+                resolved = candidate.resolve()
+                logger.debug(
+                    "Исполняемый файл '%s' найден в стандартном каталоге: %s",
+                    binary_name,
+                    resolved,
+                )
+                return resolved
 
+    logger.warning(
+        "Исполняемый файл '%s' не найден в системе. Проверенные пути: %s",
+        binary_name,
+        searched,
+    )
     raise FFmpegNotFoundError(binary_name=binary_name, searched_paths=searched)
 
 
@@ -231,7 +264,7 @@ async def get_ffmpeg_info(custom_path: PathLike | None = None) -> BinaryInfo:
     path = find_ffmpeg(custom_path=custom_path)
     raw_version = await get_binary_version(path)
     ver_str, major, minor, patch = _parse_version_components(raw_version)
-    return BinaryInfo(
+    info = BinaryInfo(
         name="ffmpeg",
         path=path,
         version_str=ver_str,
@@ -239,6 +272,8 @@ async def get_ffmpeg_info(custom_path: PathLike | None = None) -> BinaryInfo:
         minor=minor,
         patch=patch,
     )
+    logger.info("Обнаружен FFmpeg: %s (версия: %s)", info.path, info.version_str)
+    return info
 
 
 async def get_ffprobe_info(custom_path: PathLike | None = None) -> BinaryInfo:
@@ -246,7 +281,7 @@ async def get_ffprobe_info(custom_path: PathLike | None = None) -> BinaryInfo:
     path = find_ffprobe(custom_path=custom_path)
     raw_version = await get_binary_version(path)
     ver_str, major, minor, patch = _parse_version_components(raw_version)
-    return BinaryInfo(
+    info = BinaryInfo(
         name="ffprobe",
         path=path,
         version_str=ver_str,
@@ -254,6 +289,8 @@ async def get_ffprobe_info(custom_path: PathLike | None = None) -> BinaryInfo:
         minor=minor,
         patch=patch,
     )
+    logger.info("Обнаружен FFprobe: %s (версия: %s)", info.path, info.version_str)
+    return info
 
 
 def clear_discovery_cache() -> None:

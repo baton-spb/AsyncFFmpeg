@@ -33,6 +33,7 @@ from async_ffmpeg._constants import (
     DEFAULT_VIDEO_PRESET,
 )
 from async_ffmpeg._discovery import find_ffmpeg
+from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import (
     CommandOptionValue,
     ConcatMethod,
@@ -50,9 +51,9 @@ from async_ffmpeg.probe import FFprobe
 from async_ffmpeg.process import ProcessResult, ProcessRunner
 
 _RE_SILENCE_START = re.compile(r"silence_start:\s*(-?[\d\.]+)")
-_RE_SILENCE_END = re.compile(
-    r"silence_end:\s*(-?[\d\.]+)\s*\|\s*silence_duration:\s*(-?[\d\.]+)"
-)
+_RE_SILENCE_END = re.compile(r"silence_end:\s*(-?[\d\.]+)\s*\|\s*silence_duration:\s*(-?[\d\.]+)")
+
+logger = get_logger("client")
 
 
 class FFmpegClient:
@@ -187,7 +188,10 @@ class FFmpegClient:
         try:
             info = await self.probe(input_target)
             return info.duration
-        except Exception:
+        except Exception as exc:
+            logger.debug(
+                "Не удалось определить длительность для '%s' через probe: %s", input_target, exc
+            )
             return None
 
     # =========================================================================
@@ -447,6 +451,11 @@ class FFmpegClient:
                 lines.append(f"file '{clean_path}'")
 
             tmp_file.write_text("\n".join(lines), encoding="utf-8")
+            logger.debug(
+                "Создан временный файл списка для concat demuxer: %s (%d записей)",
+                tmp_file,
+                len(lines),
+            )
 
             cmd = (
                 self.create_command()
@@ -467,6 +476,7 @@ class FFmpegClient:
                 if tmp_file.exists():
                     with suppress(OSError):
                         tmp_file.unlink()
+                        logger.debug("Удалён временный файл списка concat demuxer: %s", tmp_file)
                         if tmp_file in self._created_temp_files:
                             self._created_temp_files.remove(tmp_file)
 
@@ -762,6 +772,14 @@ class FFmpegClient:
         if on_progress:
             total_duration = await self._resolve_duration_if_needed(input)
 
+        logger.info(
+            "Запуск двухпроходного кодирования для '%s' -> '%s' (битрейт=%s, кодек=%s)",
+            input,
+            output,
+            bitrate,
+            video_codec,
+        )
+
         try:
             # Первый проход: анализ видео и сбор статистики
             cmd_pass1 = (
@@ -786,7 +804,16 @@ class FFmpegClient:
                 on_progress=on_progress,
             )
             if not res1.is_success:
+                logger.warning(
+                    "Первый проход двухпроходного кодирования завершился ошибкой (код=%d)",
+                    res1.exit_code,
+                )
                 return res1
+
+            logger.info(
+                "Первый проход двухпроходного кодирования успешно завершён за %.2f с",
+                res1.duration_seconds,
+            )
 
             # Второй проход: финальное кодирование с учетом статистики
             cmd_pass2 = (
@@ -803,13 +830,24 @@ class FFmpegClient:
                 .output(output)
             )
 
-            return await cmd_pass2.execute(
+            res2 = await cmd_pass2.execute(
                 ffmpeg_path=self._ffmpeg_path or find_ffmpeg(),
                 process_runner=self._runner,
                 total_duration=total_duration,
                 timeout=timeout or self._default_timeout,
                 on_progress=on_progress,
             )
+            if res2.is_success:
+                logger.info(
+                    "Второй проход двухпроходного кодирования успешно завершён за %.2f с",
+                    res2.duration_seconds,
+                )
+            else:
+                logger.warning(
+                    "Второй проход двухпроходного кодирования завершился ошибкой (код=%d)",
+                    res2.exit_code,
+                )
+            return res2
         finally:
             if temp_log_prefix is not None:
                 parent_dir = temp_log_prefix.parent
@@ -817,6 +855,10 @@ class FFmpegClient:
                 for log_file in parent_dir.glob(f"{prefix_name}*"):
                     with suppress(OSError):
                         log_file.unlink()
+                logger.debug(
+                    "Очищены временные файлы двухпроходного кодирования с префиксом '%s'",
+                    prefix_name,
+                )
 
     async def create_contact_sheet(
         self,
@@ -894,6 +936,12 @@ class FFmpegClient:
         Returns:
             Список интервалов SilenceInterval с временными метками обнаруженной тишины.
         """
+        logger.info(
+            "Анализ пауз и тишины в '%s' (порог=%.1f dB, мин. длительность=%.2f с)",
+            input,
+            noise_tolerance_db,
+            min_duration,
+        )
         filter_str = f"silencedetect=noise={noise_tolerance_db}dB:d={min_duration}"
 
         cmd = (
@@ -930,9 +978,7 @@ class FFmpegClient:
                     end_val = float(end_match.group(1))
                     dur_val = float(end_match.group(2))
                     start_val = (
-                        current_start
-                        if current_start is not None
-                        else max(0.0, end_val - dur_val)
+                        current_start if current_start is not None else max(0.0, end_val - dur_val)
                     )
                     intervals.append(
                         SilenceInterval(start=start_val, end=end_val, duration=dur_val)
@@ -951,4 +997,5 @@ class FFmpegClient:
                     )
                 )
 
+        logger.info("Обнаружено интервалов тишины: %d в '%s'", len(intervals), input)
         return intervals

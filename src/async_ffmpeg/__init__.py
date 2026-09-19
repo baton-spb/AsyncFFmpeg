@@ -27,6 +27,7 @@ from async_ffmpeg._discovery import (
     get_ffmpeg_info,
     get_ffprobe_info,
 )
+from async_ffmpeg._logging import get_logger, logger
 from async_ffmpeg._types import (
     ConcatMethod,
     DownloadResultProtocol,
@@ -193,7 +194,9 @@ __all__ = [
     "get_ffmpeg_info",
     "get_ffprobe_info",
     "get_hwaccel_args",
+    "get_logger",
     "hflip",
+    "logger",
     "loudnorm",
     "normalize_path_for_ffmpeg",
     "overlay",

@@ -104,7 +104,6 @@ class VideoStream(BaseStream):
         return self.frame_rate
 
 
-
 @dataclass(frozen=True, slots=True)
 class AudioStream(BaseStream):
     """Информация об аудиопотоке."""
@@ -254,4 +253,3 @@ class SilenceInterval:
     start: float
     end: float
     duration: float
-

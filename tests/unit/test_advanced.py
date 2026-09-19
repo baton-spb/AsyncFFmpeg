@@ -144,4 +144,3 @@ async def test_detect_silence_empty_output(tmp_path: Path) -> None:
         min_duration=0.5,
     )
     assert intervals == []
-

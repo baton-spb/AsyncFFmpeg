@@ -17,7 +17,9 @@ async def main() -> None:
     print("Анализ доступных аппаратных возможностей FFmpeg...")
     caps = await hw.detect_hardware()
 
-    print(f"\nПоддерживаемые методы ускорения (HW Accels): {', '.join(caps.available_accels) or 'нет'}")
+    print(
+        f"\nПоддерживаемые методы ускорения (HW Accels): {', '.join(caps.available_accels) or 'нет'}"
+    )
     hw_encoders = [e.name for e in caps.encoders if e.is_hardware]
     print(f"Доступные аппаратные энкодеры ({len(hw_encoders)} шт.):")
     for enc in sorted(hw_encoders):

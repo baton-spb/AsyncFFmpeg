@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
 
 from async_ffmpeg._discovery import find_ffmpeg, find_ffprobe
+from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import (
     CommandOptionValue,
     MediaInputProtocol,
@@ -69,6 +70,8 @@ from async_ffmpeg.process import ProcessResult, ProcessRunner
 
 if TYPE_CHECKING:
     from async_ffmpeg.client import FFmpegClient
+
+logger = get_logger("pipeline")
 
 
 @dataclass(frozen=True, slots=True)
@@ -828,7 +831,10 @@ class MediaPipeline:
                         with suppress(ValueError, TypeError):
                             dur = max(0.0, dur - float(self._start))
                     calc_duration = dur
-            except Exception:
+            except Exception as exc:
+                logger.debug(
+                    "Не удалось определить длительность для прогресса через probe: %s", exc
+                )
                 calc_duration = None
 
         runner = self._client.runner if self._client is not None else ProcessRunner()
@@ -843,6 +849,11 @@ class MediaPipeline:
         eff_timeout = timeout
         if eff_timeout is None and self._client is not None:
             eff_timeout = self._client.default_timeout
+
+        logger.debug(
+            "MediaPipeline сформировал команду FFmpeg: %s",
+            cmd.build(ffmpeg_path=ffmpeg_bin),
+        )
 
         return await cmd.execute(
             ffmpeg_path=ffmpeg_bin,

@@ -9,6 +9,7 @@ from pathlib import Path
 from async_ffmpeg._compat import get_subprocess_creation_kwargs
 from async_ffmpeg._constants import DEFAULT_PROBE_TIMEOUT
 from async_ffmpeg._discovery import find_ffprobe
+from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import PathLike
 from async_ffmpeg.exceptions import FFprobeError, InvalidInputError
 from async_ffmpeg.models import (
@@ -22,6 +23,8 @@ from async_ffmpeg.models import (
     _parse_fraction,
 )
 from async_ffmpeg.process import ProcessRunner
+
+logger = get_logger("probe")
 
 
 def _parse_disposition(disp_dict: Mapping[str, object] | None) -> StreamDisposition:
@@ -392,6 +395,7 @@ class FFprobe:
         if "://" not in str_target and not Path(str_target).exists():
             raise InvalidInputError(str_target, "Файл не существует на диске")
 
+        logger.debug("Зондирование медиафайла FFprobe: %s", str_target)
         cmd = self._build_command(str_target, show_chapters=show_chapters, extra_args=extra_args)
         effective_timeout = timeout if timeout is not None else self._default_timeout
 
@@ -407,7 +411,14 @@ class FFprobe:
                     command=cmd,
                     stderr=res.stderr_text,
                 )
-            return parse_probe_json(res.stdout)
+            info = parse_probe_json(res.stdout)
+            logger.info(
+                "Успешно получены метаданные FFprobe для '%s' (формат: %s, длительность: %s с)",
+                str_target,
+                info.format.format_name,
+                f"{info.duration:.2f}" if info.duration is not None else "N/A",
+            )
+            return info
 
         creation_kwargs = get_subprocess_creation_kwargs()
         try:
@@ -427,7 +438,14 @@ class FFprobe:
                     command=cmd,
                     stderr=err_text,
                 )
-            return parse_probe_json(stdout_data)
+            info = parse_probe_json(stdout_data)
+            logger.info(
+                "Успешно получены метаданные FFprobe для '%s' (формат: %s, длительность: %s с)",
+                str_target,
+                info.format.format_name,
+                f"{info.duration:.2f}" if info.duration is not None else "N/A",
+            )
+            return info
         except (TimeoutError, OSError) as exc:
             raise FFprobeError(
                 message=f"Ошибка вызова ffprobe: {exc}",
@@ -447,6 +465,7 @@ class FFprobe:
         if "://" not in str_target and not Path(str_target).exists():
             raise InvalidInputError(str_target, "Файл не существует на диске")
 
+        logger.debug("Синхронное зондирование медиафайла FFprobe: %s", str_target)
         cmd = self._build_command(str_target, show_chapters=show_chapters, extra_args=extra_args)
         effective_timeout = timeout if timeout is not None else self._default_timeout
 
@@ -463,7 +482,14 @@ class FFprobe:
                     command=cmd,
                     stderr=proc.stderr.decode(errors="replace"),
                 )
-            return parse_probe_json(proc.stdout)
+            info = parse_probe_json(proc.stdout)
+            logger.info(
+                "Успешно получены метаданные FFprobe (sync) для '%s' (формат: %s, длительность: %s с)",
+                str_target,
+                info.format.format_name,
+                f"{info.duration:.2f}" if info.duration is not None else "N/A",
+            )
+            return info
         except (subprocess.SubprocessError, OSError) as exc:
             raise FFprobeError(
                 message=f"Ошибка синхронного вызова ffprobe: {exc}",

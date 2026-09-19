@@ -15,12 +15,15 @@ from async_ffmpeg._constants import (
     DEFAULT_READ_BUFFER_SIZE,
     GRACEFUL_SHUTDOWN_TIMEOUT,
 )
+from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import PathLike, ProgressCallback, StderrCallback, StdoutLineCallback
 from async_ffmpeg.exceptions import (
     FFmpegCancelledError,
     FFmpegProcessError,
     FFmpegTimeoutError,
 )
+
+logger = get_logger("process")
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +57,7 @@ class ProcessResult:
         return self.stderr.decode(errors="replace")
 
 
-async def _invoke_callback(  # type: ignore[explicit-any]
+async def _invoke_callback(
     callback: Callable[..., object],
     *args: object,
 ) -> None:
@@ -72,8 +75,8 @@ async def _invoke_callback(  # type: ignore[explicit-any]
             if inspect.isawaitable(res):
                 await res
     except Exception:
-        # Исключения в пользовательских коллбэках не должны ронять чтение потоков
-        pass
+        # Исключения в пользовательских коллбэках не должны прерывать чтение потоков процесса
+        logger.exception("Необработанное исключение в пользовательском коллбэке")
 
 
 class ProcessRunner:
@@ -144,6 +147,7 @@ class ProcessRunner:
             if p.returncode is None
         ]
         if tasks:
+            logger.info("Грациозное завершение %d активных подпроцессов FFmpeg", len(tasks))
             await asyncio.gather(*tasks, return_exceptions=True)
 
     async def run(
@@ -195,6 +199,7 @@ class ProcessRunner:
             stdout_task: asyncio.Task[None] | None = None
             stderr_task: asyncio.Task[None] | None = None
             try:
+                logger.debug("Запуск команды FFmpeg: %s", " ".join(cmd_strs))
                 # creation_kwargs содержит creationflags (Windows) или start_new_session (Unix)
                 process = await asyncio.create_subprocess_exec(
                     *cmd_strs,
@@ -207,6 +212,11 @@ class ProcessRunner:
                     **creation_kwargs,  # type: ignore[arg-type]
                 )
                 self._active_processes.add(process)
+                logger.info(
+                    "Запущен подпроцесс FFmpeg (PID=%s, таймаут=%s)",
+                    process.pid,
+                    f"{effective_timeout:.1f} с" if effective_timeout else "нет",
+                )
 
                 stdout_chunks: list[bytes] = []
                 stderr_chunks: list[bytes] = []
@@ -245,6 +255,12 @@ class ProcessRunner:
                     else:
                         await asyncio.gather(process.wait(), stdout_task, stderr_task)
                 except TimeoutError as err:
+                    logger.warning(
+                        "Превышен таймаут (%.2f с) выполнения подпроцесса FFmpeg (PID=%s): %s",
+                        effective_timeout or 0.0,
+                        process.pid if process else "N/A",
+                        " ".join(cmd_strs),
+                    )
                     await terminate_process_gracefully(process, timeout=effective_graceful_timeout)
                     await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
                     raise FFmpegTimeoutError(
@@ -264,6 +280,22 @@ class ProcessRunner:
                     command=cmd_strs,
                 )
 
+                if result.is_success:
+                    logger.info(
+                        "Подпроцесс FFmpeg (PID=%s) успешно завершён за %.2f с",
+                        process.pid,
+                        duration,
+                    )
+                else:
+                    logger.warning(
+                        "Подпроцесс FFmpeg (PID=%s) завершился с ненулевым кодом %d за %.2f с",
+                        process.pid,
+                        exit_code,
+                        duration,
+                    )
+                    if result.stderr:
+                        logger.debug("stderr подпроцесса: %s", result.stderr_text)
+
                 if check and not result.success:
                     raise FFmpegProcessError(
                         exit_code=exit_code,
@@ -274,6 +306,11 @@ class ProcessRunner:
 
                 return result
             except asyncio.CancelledError as err:
+                logger.info(
+                    "Выполнение подпроцесса FFmpeg отменено (PID=%s): %s",
+                    process.pid if process else "N/A",
+                    " ".join(cmd_strs),
+                )
                 if process is not None:
                     await terminate_process_gracefully(process, timeout=effective_graceful_timeout)
                 tasks_to_cancel = [t for t in (stdout_task, stderr_task) if t is not None]
