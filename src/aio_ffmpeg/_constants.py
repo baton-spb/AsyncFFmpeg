@@ -2,7 +2,7 @@
 
 from typing import Final
 
-__version__: Final[str] = "0.1.1"
+__version__: Final[str] = "0.1.2"
 
 # Имена исполняемых файлов по умолчанию
 DEFAULT_FFMPEG_EXECUTABLE: Final[str] = "ffmpeg"
