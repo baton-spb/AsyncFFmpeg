@@ -5,11 +5,17 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Any
 
 
 def _parse_fraction(value: str | None) -> float:
-    """Вычисляет числовое значение частоты кадров из дроби вида '30/1' или '24000/1001'."""
+    """Вычисляет числовое значение частоты кадров из дроби вида '30/1' или '24000/1001'.
+
+    Args:
+        value: Строковое представление дроби (например, '25/1', '30000/1001') или десятичное число.
+
+    Returns:
+        Вычисленное вещественное число с плавающей точкой или 0.0 при некорректном формате.
+    """
     if not value or value == "0/0":
         return 0.0
     if "/" in value:
@@ -165,7 +171,7 @@ class MediaInfo:
     audio_streams: tuple[AudioStream, ...]
     subtitle_streams: tuple[SubtitleStream, ...]
     chapters: tuple[Chapter, ...] = ()
-    raw_data: dict[str, Any] = field(default_factory=dict)
+    raw_data: dict[str, object] = field(default_factory=dict)
 
     @property
     def has_video(self) -> bool:

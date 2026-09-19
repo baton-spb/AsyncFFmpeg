@@ -53,13 +53,17 @@ progress=continue
 import asyncio
 from async_ffmpeg import FFmpegClient, ProgressInfo
 
+
 async def main():
     client = FFmpegClient()
 
     def handle_progress(p: ProgressInfo) -> None:
         if p.percentage is not None:
             bar = "#" * int(p.percentage // 5)
-            print(f"\r[{bar:<20}] {p.percentage:.1f}% | ETA: {p.eta_seconds:.1f}s | FPS: {p.fps:.1f}", end="")
+            print(
+                f"\r[{bar:<20}] {p.percentage:.1f}% | ETA: {p.eta_seconds:.1f}s | FPS: {p.fps:.1f}",
+                end="",
+            )
         else:
             print(f"\rВремя: {p.out_time} | Скорость: {p.speed}x", end="")
 
@@ -69,6 +73,7 @@ async def main():
         on_progress=handle_progress,
     )
     print("\nОбработка завершена!")
+
 
 asyncio.run(main())
 ```

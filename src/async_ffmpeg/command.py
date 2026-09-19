@@ -6,12 +6,13 @@
 
 from collections.abc import Awaitable
 from dataclasses import dataclass
-from typing import Any, Self
+from typing import Self
 
 from async_ffmpeg._compat import normalize_path_for_ffmpeg
 from async_ffmpeg._constants import DEFAULT_LOGLEVEL, DEFAULT_STATS_PERIOD
 from async_ffmpeg._discovery import find_ffmpeg
 from async_ffmpeg._types import (
+    CommandOptionValue,
     LogLevel,
     MediaInputProtocol,
     PathLike,
@@ -62,6 +63,7 @@ class FFmpegCommand:
     """Построитель командной строки FFmpeg с контролем синтаксиса и порядка аргументов."""
 
     def __init__(self) -> None:
+        """Инициализирует пустой построитель аргументов командной строки FFmpeg."""
         self._global_options: list[tuple[str, str | None]] = []
         self._inputs: list[InputEntry] = []
         self._outputs: list[OutputEntry] = []
@@ -139,8 +141,16 @@ class FFmpegCommand:
 
     # === Входы ===
 
-    def input(self, target: PathLike | MediaInputProtocol, **opts: Any) -> Self:
-        """Добавляет входной источник данных (-i) с предшествующими опциями."""
+    def input(self, target: PathLike | MediaInputProtocol, **opts: CommandOptionValue) -> Self:
+        """Добавляет входной источник данных (-i) с предшествующими опциями.
+
+        Args:
+            target: Путь к файлу, сетевой URL или объект, реализующий MediaInputProtocol.
+            **opts: Опции, применяемые к данному входному файлу (например, ss=10, t=5).
+
+        Returns:
+            Экземпляр построителя команд FFmpegCommand (для fluent-цепочек).
+        """
         if isinstance(target, MediaInputProtocol):
             str_target = target.to_ffmpeg_input()
         else:
@@ -288,16 +298,32 @@ class FFmpegCommand:
         self._pending_output_options.append(("-f", fmt))
         return self
 
-    def output_option(self, key: str, value: str | int | float | None = None) -> Self:
-        """Добавляет произвольную опцию к текущему выходному файлу."""
+    def output_option(self, key: str, value: CommandOptionValue = None) -> Self:
+        """Добавляет произвольную опцию к текущему выходному файлу.
+
+        Args:
+            key: Ключ опции (например, 'movflags', 'q:v').
+            value: Значение опции или None для флага-переключателя.
+
+        Returns:
+            Экземпляр построителя команд FFmpegCommand.
+        """
         opt_key = _format_option_key(key)
         self._pending_output_options.append((opt_key, str(value) if value is not None else None))
         return self
 
     # === Выходы ===
 
-    def output(self, target: PathLike, **opts: Any) -> Self:
-        """Добавляет выходной файл, объединяя накопленные опции и переданные в kwargs."""
+    def output(self, target: PathLike, **opts: CommandOptionValue) -> Self:
+        """Добавляет выходной файл, объединяя накопленные опции и переданные в kwargs.
+
+        Args:
+            target: Путь к целевому файлу для сохранения результата.
+            **opts: Именованные опции кодирования выходного потока.
+
+        Returns:
+            Экземпляр построителя команд FFmpegCommand.
+        """
         str_target = normalize_path_for_ffmpeg(target)
 
         combined_opts = list(self._pending_output_options)

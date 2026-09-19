@@ -9,8 +9,9 @@
 """
 
 from collections.abc import Iterable, Sequence
-from typing import Any, Self
+from typing import Self
 
+from async_ffmpeg._types import FilterParamValue
 from async_ffmpeg.exceptions import FilterError
 
 
@@ -28,10 +29,16 @@ def _format_label(label: str) -> str:
     return f"[{clean}]"
 
 
-def escape_filter_param(value: Any) -> str:
+def escape_filter_param(value: FilterParamValue) -> str:
     """Экранирует значение параметра для использования в синтаксисе фильтра FFmpeg.
 
     Экранирует символы двоеточия ':', обратного слэша '\\', запятой ',' и одинарных кавычек.
+
+    Args:
+        value: Значение параметра фильтра (строка, число или булево значение).
+
+    Returns:
+        Экранированная строка, безопасная для вставки в синтаксис параметров FFmpeg.
     """
     if isinstance(value, bool):
         return "1" if value else "0"
@@ -69,7 +76,19 @@ class Filter:
     ```
     """
 
-    def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        name: str,
+        *args: FilterParamValue,
+        **kwargs: FilterParamValue | None,
+    ) -> None:
+        """Инициализирует фильтр FFmpeg с позиционными и именованными параметрами.
+
+        Args:
+            name: Название фильтра FFmpeg (например, 'scale', 'overlay', 'loudnorm').
+            *args: Позиционные параметры фильтра.
+            **kwargs: Именованные параметры фильтра (None отфильтровываются).
+        """
         clean_name = name.strip()
         if not clean_name:
             raise FilterError(name, "Имя фильтра не может быть пустым.")
@@ -92,8 +111,20 @@ class Filter:
         """Именованные параметры фильтра."""
         return self._kwargs
 
-    def with_options(self, *args: Any, **kwargs: Any) -> Self:
-        """Возвращает новый фильтр с дополненными опциями."""
+    def with_options(
+        self,
+        *args: FilterParamValue,
+        **kwargs: FilterParamValue | None,
+    ) -> Self:
+        """Возвращает новый фильтр с дополненными опциями.
+
+        Args:
+            *args: Дополнительные позиционные параметры.
+            **kwargs: Дополнительные именованные параметры.
+
+        Returns:
+            Новый экземпляр Filter с обновленными параметрами.
+        """
         new_args = self._args + tuple(str(a) for a in args)
         new_kwargs = dict(self._kwargs)
         for k, v in kwargs.items():
@@ -112,6 +143,7 @@ class Filter:
         return f"{self._name}={':'.join(parts)}"
 
     def __repr__(self) -> str:
+        """Возвращает строковое представление фильтра для отладки."""
         return f"Filter({self._name!r}, str={str(self)!r})"
 
 
@@ -128,6 +160,13 @@ class FilterChain:
         inputs: Sequence[str] | str | None = None,
         outputs: Sequence[str] | str | None = None,
     ) -> None:
+        """Инициализирует цепочку фильтров с опциональными входными и выходными метками.
+
+        Args:
+            *filters: Фильтры (Filter) или строковые выражения фильтров.
+            inputs: Входные метки потоков (например, '0:v' или ['0:v', '1:v']).
+            outputs: Выходные метки потоков (например, 'scaled' или ['v1', 'v2']).
+        """
         self._filters: list[Filter] = []
         for f in filters:
             if isinstance(f, Filter):
@@ -206,6 +245,7 @@ class FilterChain:
         return f"{in_str}{filters_str}{out_str}"
 
     def __repr__(self) -> str:
+        """Возвращает строковое представление цепочки фильтров."""
         return f"FilterChain({str(self)!r})"
 
 
@@ -213,6 +253,11 @@ class FilterGraph:
     """Базовый граф фильтров, состоящий из одной или нескольких цепочек FilterChain."""
 
     def __init__(self, *chains: FilterChain) -> None:
+        """Инициализирует граф фильтров из набора цепочек FilterChain.
+
+        Args:
+            *chains: Цепочки фильтров FilterChain, входящие в граф.
+        """
         self._chains: list[FilterChain] = list(chains)
 
     @property
@@ -252,6 +297,7 @@ class FilterGraph:
         return ";".join(str(chain) for chain in self._chains)
 
     def __repr__(self) -> str:
+        """Возвращает строковое представление графа фильтров."""
         return f"{self.__class__.__name__}({str(self)!r})"
 
 
@@ -315,7 +361,7 @@ def scale(
         flags: Алгоритм масштабирования (e.g. 'bicubic', 'lanczos').
         eval_mode: Время вычисления выражений ('init' или 'frame').
     """
-    kwargs: dict[str, Any] = {}
+    kwargs: dict[str, FilterParamValue] = {}
     if force_original_aspect_ratio is not None:
         kwargs["force_original_aspect_ratio"] = force_original_aspect_ratio
     if flags is not None:
@@ -403,8 +449,17 @@ def vtrim(
     end: float | None = None,
     duration: float | None = None,
 ) -> Filter:
-    """Фильтр обрезки видеопотока (trim)."""
-    kwargs: dict[str, Any] = {}
+    """Фильтр обрезки видеопотока (trim).
+
+    Args:
+        start: Время начала обрезки в секундах.
+        end: Время окончания обрезки в секундах.
+        duration: Длительность сохраняемого фрагмента в секундах.
+
+    Returns:
+        Сконфигурированный объект Filter("trim").
+    """
+    kwargs: dict[str, FilterParamValue] = {}
     if start is not None:
         kwargs["start"] = start
     if end is not None:
@@ -430,8 +485,11 @@ def overlay(
         eof_action: Действие при завершении второго потока ('repeat', 'endall', 'pass').
         shortest: Завершать вывод при окончании кратчайшего входного потока.
         format: Цветовое пространство оверлея (e.g. 'yuv420', 'rgb').
+
+    Returns:
+        Сконфигурированный объект Filter("overlay").
     """
-    kwargs: dict[str, Any] = {
+    kwargs: dict[str, FilterParamValue] = {
         "eof_action": eof_action,
     }
     if shortest:
@@ -452,9 +510,23 @@ def drawtext(
     box: bool = False,
     boxcolor: str | None = None,
 ) -> Filter:
-    """Фильтр наложения текста на видео (drawtext)."""
+    """Фильтр наложения текста на видео (drawtext).
+
+    Args:
+        text: Текст надписи для наложения.
+        x: Позиция по горизонтали (число или выражение).
+        y: Позиция по вертикали (число или выражение).
+        fontsize: Размер шрифта в пикселях.
+        fontcolor: Цвет текста (например, 'white', 'yellow@0.8').
+        fontfile: Путь к файлу шрифта TTF/OTF.
+        box: Отображать подложку под текстом.
+        boxcolor: Цвет подложки (например, 'black@0.5').
+
+    Returns:
+        Сконфигурированный объект Filter("drawtext").
+    """
     clean_text = text.replace("\\", "\\\\").replace("'", "\\'").replace(":", "\\:")
-    kwargs: dict[str, Any] = {
+    kwargs: dict[str, FilterParamValue] = {
         "text": f"'{clean_text}'",
         "x": str(x),
         "y": str(y),
@@ -481,12 +553,14 @@ def drawtext(
 def volume(volume: float | str, *, precision: str | None = None) -> Filter:
     """Фильтр изменения громкости аудио (volume).
 
-    Примеры:
-    - `volume(1.5)` — увеличение громкости в 1.5 раза
-    - `volume("6dB")` — усиление на +6 дБ
-    - `volume(0.5)` — уменьшение громкости в 2 раза
+    Args:
+        volume: Коэффициент громкости (число, e.g. 1.5, или строка, e.g. "6dB").
+        precision: Точность вычислений ('fixed', 'float', 'double').
+
+    Returns:
+        Сконфигурированный объект Filter("volume").
     """
-    kwargs: dict[str, Any] = {}
+    kwargs: dict[str, FilterParamValue] = {}
     if precision is not None:
         kwargs["precision"] = precision
     return Filter("volume", str(volume), **kwargs)
@@ -496,6 +570,12 @@ def atempo(speed: float) -> Filter:
     """Фильтр изменения скорости воспроизведения аудио без изменения высоты тона (atempo).
 
     FFmpeg поддерживает значения от 0.5 до 2.0 на один фильтр atempo.
+
+    Args:
+        speed: Множитель скорости (от 0.5 до 2.0).
+
+    Returns:
+        Сконфигурированный объект Filter("atempo").
     """
     return Filter("atempo", str(speed))
 
@@ -514,8 +594,11 @@ def afade(
         start_time: Время старта эффекта в секундах.
         duration: Длительность эффекта в секундах.
         curve: Тип кривой затухания (e.g. 'tri', 'qsin', 'esin', 'log').
+
+    Returns:
+        Сконфигурированный объект Filter("afade").
     """
-    kwargs: dict[str, Any] = {"t": type}
+    kwargs: dict[str, FilterParamValue] = {"t": type}
     if start_time is not None:
         kwargs["st"] = start_time
     if duration is not None:
@@ -538,8 +621,11 @@ def loudnorm(
         lra: Диапазон громкости (Loudness Range Target, LU). По умолчанию 7 LU.
         tp: Максимальный истинный пик (Maximum True Peak, dBFS). По умолчанию -1.0 dBFS.
         dual_mono: Обрабатывать стерео как два моно-канала.
+
+    Returns:
+        Сконфигурированный объект Filter("loudnorm").
     """
-    kwargs: dict[str, Any] = {
+    kwargs: dict[str, FilterParamValue] = {
         "I": str(i),
         "LRA": str(lra),
         "tp": str(tp),
@@ -549,7 +635,11 @@ def loudnorm(
 
 
 def anull() -> Filter:
-    """Аудио-фильтр null (сквозной пропуск аудио без изменений)."""
+    """Аудио-фильтр null (сквозной пропуск аудио без изменений).
+
+    Returns:
+        Сконфигурированный объект Filter("anull").
+    """
     return Filter("anull")
 
 
@@ -565,6 +655,9 @@ def amix(
         inputs: Количество входных аудиопотоков.
         duration: Стратегия завершения ('longest', 'shortest', 'first').
         dropout_transition: Время плавного затухания канала при завершении.
+
+    Returns:
+        Сконфигурированный объект Filter("amix").
     """
     return Filter(
         "amix",
@@ -579,8 +672,17 @@ def atrim(
     end: float | None = None,
     duration: float | None = None,
 ) -> Filter:
-    """Фильтр обрезки аудиопотока (atrim)."""
-    kwargs: dict[str, Any] = {}
+    """Фильтр обрезки аудиопотока (atrim).
+
+    Args:
+        start: Время начала обрезки в секундах.
+        end: Время окончания обрезки в секундах.
+        duration: Длительность сохраняемого фрагмента в секундах.
+
+    Returns:
+        Сконфигурированный объект Filter("atrim").
+    """
+    kwargs: dict[str, FilterParamValue] = {}
     if start is not None:
         kwargs["start"] = start
     if end is not None:

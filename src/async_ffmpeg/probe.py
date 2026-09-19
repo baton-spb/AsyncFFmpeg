@@ -3,9 +3,8 @@
 import asyncio
 import json
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
 
 from async_ffmpeg._compat import get_subprocess_creation_kwargs
 from async_ffmpeg._constants import DEFAULT_PROBE_TIMEOUT
@@ -25,8 +24,15 @@ from async_ffmpeg.models import (
 from async_ffmpeg.process import ProcessRunner
 
 
-def _parse_disposition(disp_dict: dict[str, Any] | None) -> StreamDisposition:
-    """Парсит секцию disposition из ffprobe JSON."""
+def _parse_disposition(disp_dict: Mapping[str, object] | None) -> StreamDisposition:
+    """Парсит секцию disposition из ffprobe JSON.
+
+    Args:
+        disp_dict: Словарь disposition из JSON ffprobe.
+
+    Returns:
+        Сконструированный объект StreamDisposition.
+    """
     if not disp_dict:
         return StreamDisposition()
     return StreamDisposition(
@@ -50,69 +56,119 @@ def _parse_disposition(disp_dict: dict[str, Any] | None) -> StreamDisposition:
     )
 
 
-def _safe_float(val: Any) -> float | None:
+def _safe_float(val: object) -> float | None:
+    """Безопасно преобразует значение в вещественное число float.
+
+    Args:
+        val: Исходное значение из JSON FFprobe.
+
+    Returns:
+        Число float или None при невозможности преобразования.
+    """
     if val is None or val == "" or str(val).upper() == "N/A":
         return None
     try:
-        return float(val)
+        return float(str(val))
     except ValueError, TypeError:
         return None
 
 
-def _safe_int(val: Any) -> int | None:
+def _safe_int(val: object) -> int | None:
+    """Безопасно преобразует значение в целое число int.
+
+    Args:
+        val: Исходное значение из JSON FFprobe.
+
+    Returns:
+        Число int или None при невозможности преобразования.
+    """
     if val is None or val == "" or str(val).upper() == "N/A":
         return None
     try:
-        return int(val)
+        return int(float(str(val)))
     except ValueError, TypeError:
         return None
 
 
-def parse_probe_json(data: str | bytes | dict[str, Any]) -> MediaInfo:
-    """Парсит сырой JSON-вывод FFprobe в строгую типизированную модель `MediaInfo`."""
-    raw: dict[str, Any]
+def parse_probe_json(data: str | bytes | Mapping[str, object]) -> MediaInfo:
+    """Парсит сырой JSON-вывод FFprobe в строгую типизированную модель `MediaInfo`.
+
+    Args:
+        data: Строка, байты JSON или словарь метаданных FFprobe.
+
+    Returns:
+        Типизированная структура метаданных MediaInfo.
+
+    Raises:
+        FFprobeError: Если передан невалидный JSON.
+    """
+    raw: dict[str, object]
     if isinstance(data, (str, bytes)):
         try:
-            raw = json.loads(data)
+            parsed = json.loads(data)
+            if not isinstance(parsed, dict):
+                raise FFprobeError(f"Ожидался JSON-объект, получено: {type(parsed).__name__}")
+            raw = parsed
         except json.JSONDecodeError as exc:
             snippet = str(data)[:200]
             raise FFprobeError(f"Невалидный JSON от FFprobe: {exc}. Данные: {snippet}") from exc
     else:
-        raw = data
+        raw = dict(data)
 
-    fmt_raw = raw.get("format", {})
+    fmt_dict = raw.get("format")
+    fmt_raw: Mapping[str, object] = fmt_dict if isinstance(fmt_dict, Mapping) else {}
+    fmt_tags_dict = fmt_raw.get("tags")
+    fmt_tags: dict[str, str] = (
+        {str(k): str(v) for k, v in fmt_tags_dict.items()}
+        if isinstance(fmt_tags_dict, Mapping)
+        else {}
+    )
+
     media_format = MediaFormat(
-        filename=fmt_raw.get("filename", ""),
+        filename=str(fmt_raw.get("filename", "")),
         nb_streams=_safe_int(fmt_raw.get("nb_streams")) or 0,
-        format_name=fmt_raw.get("format_name", ""),
-        format_long_name=fmt_raw.get("format_long_name", ""),
+        format_name=str(fmt_raw.get("format_name", "")),
+        format_long_name=str(fmt_raw.get("format_long_name", "")),
         start_time=_safe_float(fmt_raw.get("start_time")),
         duration=_safe_float(fmt_raw.get("duration")),
         size=_safe_int(fmt_raw.get("size")),
         bit_rate=_safe_int(fmt_raw.get("bit_rate")),
         probe_score=_safe_int(fmt_raw.get("probe_score")),
-        tags=fmt_raw.get("tags", {}) if isinstance(fmt_raw.get("tags"), dict) else {},
+        tags=fmt_tags,
     )
 
-    streams_raw = raw.get("streams", [])
+    streams_val = raw.get("streams")
+    streams_raw: list[Mapping[str, object]] = (
+        [s for s in streams_val if isinstance(s, Mapping)] if isinstance(streams_val, list) else []
+    )
     video_streams: list[VideoStream] = []
     audio_streams: list[AudioStream] = []
     subtitle_streams: list[SubtitleStream] = []
     all_streams: list[VideoStream | AudioStream | SubtitleStream] = []
 
     for s in streams_raw:
-        codec_type = s.get("codec_type", "").lower()
+        codec_type = str(s.get("codec_type", "")).lower()
         idx = _safe_int(s.get("index")) or 0
-        c_name = s.get("codec_name", "")
-        c_long_name = s.get("codec_long_name", "")
-        profile = s.get("profile")
-        tag_str = s.get("codec_tag_string")
-        tags = s.get("tags", {}) if isinstance(s.get("tags"), dict) else {}
-        disposition = _parse_disposition(s.get("disposition"))
+        c_name = str(s.get("codec_name", ""))
+        c_long_name = str(s.get("codec_long_name", ""))
+        profile = str(s["profile"]) if "profile" in s and s["profile"] is not None else None
+        tag_str = (
+            str(s["codec_tag_string"])
+            if "codec_tag_string" in s and s["codec_tag_string"] is not None
+            else None
+        )
+        s_tags_raw = s.get("tags")
+        tags: dict[str, str] = (
+            {str(k): str(v) for k, v in s_tags_raw.items()}
+            if isinstance(s_tags_raw, Mapping)
+            else {}
+        )
+        disp_raw = s.get("disposition")
+        disposition = _parse_disposition(disp_raw if isinstance(disp_raw, Mapping) else None)
 
         if codec_type == "video":
-            r_fr = s.get("r_frame_rate", "0/0")
-            avg_fr = s.get("avg_frame_rate", "0/0")
+            r_fr = str(s.get("r_frame_rate", "0/0"))
+            avg_fr = str(s.get("avg_frame_rate", "0/0"))
             fr = _parse_fraction(avg_fr) or _parse_fraction(r_fr)
 
             v_stream = VideoStream(
@@ -126,7 +182,7 @@ def parse_probe_json(data: str | bytes | dict[str, Any]) -> MediaInfo:
                 disposition=disposition,
                 width=_safe_int(s.get("width")) or 0,
                 height=_safe_int(s.get("height")) or 0,
-                pix_fmt=s.get("pix_fmt", ""),
+                pix_fmt=str(s.get("pix_fmt", "")),
                 frame_rate=fr,
                 r_frame_rate=r_fr,
                 avg_frame_rate=avg_fr,
@@ -135,13 +191,41 @@ def parse_probe_json(data: str | bytes | dict[str, Any]) -> MediaInfo:
                 nb_frames=_safe_int(s.get("nb_frames")),
                 coded_width=_safe_int(s.get("coded_width")),
                 coded_height=_safe_int(s.get("coded_height")),
-                sample_aspect_ratio=s.get("sample_aspect_ratio"),
-                display_aspect_ratio=s.get("display_aspect_ratio"),
-                color_space=s.get("color_space"),
-                color_range=s.get("color_range"),
-                color_primaries=s.get("color_primaries"),
-                color_transfer=s.get("color_transfer"),
-                field_order=s.get("field_order"),
+                sample_aspect_ratio=(
+                    str(s["sample_aspect_ratio"])
+                    if "sample_aspect_ratio" in s and s["sample_aspect_ratio"] is not None
+                    else None
+                ),
+                display_aspect_ratio=(
+                    str(s["display_aspect_ratio"])
+                    if "display_aspect_ratio" in s and s["display_aspect_ratio"] is not None
+                    else None
+                ),
+                color_space=(
+                    str(s["color_space"])
+                    if "color_space" in s and s["color_space"] is not None
+                    else None
+                ),
+                color_range=(
+                    str(s["color_range"])
+                    if "color_range" in s and s["color_range"] is not None
+                    else None
+                ),
+                color_primaries=(
+                    str(s["color_primaries"])
+                    if "color_primaries" in s and s["color_primaries"] is not None
+                    else None
+                ),
+                color_transfer=(
+                    str(s["color_transfer"])
+                    if "color_transfer" in s and s["color_transfer"] is not None
+                    else None
+                ),
+                field_order=(
+                    str(s["field_order"])
+                    if "field_order" in s and s["field_order"] is not None
+                    else None
+                ),
                 is_avc=str(s.get("is_avc", "")).lower() == "true",
             )
             video_streams.append(v_stream)
@@ -159,8 +243,16 @@ def parse_probe_json(data: str | bytes | dict[str, Any]) -> MediaInfo:
                 disposition=disposition,
                 sample_rate=_safe_int(s.get("sample_rate")) or 0,
                 channels=_safe_int(s.get("channels")) or 0,
-                channel_layout=s.get("channel_layout"),
-                sample_fmt=s.get("sample_fmt"),
+                channel_layout=(
+                    str(s["channel_layout"])
+                    if "channel_layout" in s and s["channel_layout"] is not None
+                    else None
+                ),
+                sample_fmt=(
+                    str(s["sample_fmt"])
+                    if "sample_fmt" in s and s["sample_fmt"] is not None
+                    else None
+                ),
                 duration=_safe_float(s.get("duration")),
                 bit_rate=_safe_int(s.get("bit_rate")),
                 nb_frames=_safe_int(s.get("nb_frames")),
@@ -186,13 +278,23 @@ def parse_probe_json(data: str | bytes | dict[str, Any]) -> MediaInfo:
             subtitle_streams.append(sub_stream)
             all_streams.append(sub_stream)
 
-    chapters_raw = raw.get("chapters", [])
+    chapters_val = raw.get("chapters")
+    chapters_raw: list[Mapping[str, object]] = (
+        [c for c in chapters_val if isinstance(c, Mapping)]
+        if isinstance(chapters_val, list)
+        else []
+    )
     chapters: list[Chapter] = []
     for c in chapters_raw:
-        c_tags = c.get("tags", {}) if isinstance(c.get("tags"), dict) else {}
+        c_tags_raw = c.get("tags")
+        c_tags: dict[str, str] = (
+            {str(k): str(v) for k, v in c_tags_raw.items()}
+            if isinstance(c_tags_raw, Mapping)
+            else {}
+        )
         chapter = Chapter(
             id=_safe_int(c.get("id")) or 0,
-            time_base=c.get("time_base", ""),
+            time_base=str(c.get("time_base", "")),
             start=_safe_int(c.get("start")) or 0,
             start_time=_safe_float(c.get("start_time")) or 0.0,
             end=_safe_int(c.get("end")) or 0,
@@ -222,6 +324,13 @@ class FFprobe:
         default_timeout: float = DEFAULT_PROBE_TIMEOUT,
         process_runner: ProcessRunner | None = None,
     ) -> None:
+        """Инициализирует анализатор медиафайлов FFprobe.
+
+        Args:
+            ffprobe_path: Пользовательский путь к бинарнику ffprobe.
+            default_timeout: Таймаут анализа по умолчанию в секундах.
+            process_runner: Опциональный ProcessRunner для переиспользования пула процессов.
+        """
         self._custom_path = ffprobe_path
         self._default_timeout = default_timeout
         self._process_runner = process_runner
@@ -238,6 +347,16 @@ class FFprobe:
         show_chapters: bool = True,
         extra_args: Sequence[str] | None = None,
     ) -> list[str]:
+        """Формирует список аргументов командной строки ffprobe для JSON-анализа.
+
+        Args:
+            target: Путь к медиафайлу или сетевой URL.
+            show_chapters: Включать ли информацию о главах (-show_chapters).
+            extra_args: Дополнительные аргументы командной строки.
+
+        Returns:
+            Список строковых аргументов для запуска процесса ffprobe.
+        """
         cmd = [
             str(self.binary_path),
             "-v",
@@ -296,7 +415,7 @@ class FFprobe:
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                **creation_kwargs,
+                **creation_kwargs,  # type: ignore[arg-type]
             )
             stdout_data, stderr_data = await asyncio.wait_for(
                 proc.communicate(), timeout=effective_timeout

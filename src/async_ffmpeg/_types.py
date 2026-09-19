@@ -63,11 +63,17 @@ type StreamType = Literal[
     "attachment",
 ]
 
-# Коллбэки для отслеживания прогресса и потока stderr
+# Коллбэки для отслеживания прогресса и потоков вывода
 type ProgressCallback = (
     Callable[["ProgressInfo"], None] | Callable[["ProgressInfo"], Awaitable[None]]
 )
 type StderrCallback = Callable[[str], None] | Callable[[str], Awaitable[None]]
+type StdoutLineCallback = Callable[[str], None] | Callable[[str], Awaitable[None]]
+
+# Допустимые типы значений параметров командной строки и фильтров
+type CommandOptionValue = str | int | float | bool | Path | None
+type FilterParamValue = str | int | float | bool
+type ProbeRawDict = dict[str, object]
 
 
 @runtime_checkable

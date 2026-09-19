@@ -27,6 +27,7 @@ pip install async-ffmpeg
 import asyncio
 from async_ffmpeg import FFmpegClient
 
+
 async def main() -> None:
     client = FFmpegClient()
     info = await client.probe("input.mp4")
@@ -43,6 +44,7 @@ async def main() -> None:
         a = info.primary_audio
         print(f"Аудио: {a.codec_name}, частота {a.sample_rate} Гц, каналы: {a.channels}")
 
+
 asyncio.run(main())
 ```
 
@@ -54,8 +56,10 @@ asyncio.run(main())
 import asyncio
 from async_ffmpeg import FFmpegClient, ProgressInfo
 
+
 async def main() -> None:
     async with FFmpegClient(max_concurrent=3) as client:
+
         def on_prog(p: ProgressInfo) -> None:
             pct = f"{p.percentage:.1f}%" if p.percentage is not None else "N/A"
             print(f"Прогресс: {pct} | FPS: {p.fps:.1f} | Скорость: {p.speed}")
@@ -73,6 +77,7 @@ async def main() -> None:
         )
         print(f"Готово за {result.duration_seconds:.2f} сек!")
 
+
 asyncio.run(main())
 ```
 
@@ -85,6 +90,7 @@ asyncio.run(main())
 ```python
 import asyncio
 from async_ffmpeg import FFmpegClient
+
 
 async def main() -> None:
     client = FFmpegClient()
@@ -104,6 +110,7 @@ async def main() -> None:
     result = await pipeline.run()
     print("Конвейер выполнен:", result.success)
 
+
 asyncio.run(main())
 ```
 
@@ -115,6 +122,7 @@ asyncio.run(main())
 import asyncio
 from async_ffmpeg import FFmpegClient
 
+
 async def main() -> None:
     client = FFmpegClient()
     await client.extract_audio(
@@ -123,6 +131,7 @@ async def main() -> None:
         codec="libmp3lame",
         bitrate="192k",
     )
+
 
 asyncio.run(main())
 ```
@@ -135,6 +144,7 @@ asyncio.run(main())
 import asyncio
 from async_ffmpeg import FFmpegClient
 
+
 async def main() -> None:
     client = FFmpegClient()
     # Извлечет 1 кадр каждые 10 секунд
@@ -144,6 +154,7 @@ async def main() -> None:
         interval=10.0,
         resolution=(320, 180),
     )
+
 
 asyncio.run(main())
 ```

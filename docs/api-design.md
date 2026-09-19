@@ -35,25 +35,30 @@
 import asyncio
 from async_ffmpeg import FFmpegClient
 
+
 async def main():
     client = FFmpegClient()
 
     # Анализ файла
     info = await client.probe("input.mp4")
     print(f"Длительность: {info.duration}s")
-    print(f"Видео: {info.primary_video.codec_name} {info.primary_video.width}x{info.primary_video.height}")
+    print(
+        f"Видео: {info.primary_video.codec_name} {info.primary_video.width}x{info.primary_video.height}"
+    )
 
     # Транскодирование с прогрессом
     async def on_progress(p):
         print(f"Прогресс: {p.out_time} | Скорость: {p.speed}")
 
     await client.transcode(
-        "input.mp4", "output.mp4",
+        "input.mp4",
+        "output.mp4",
         video_codec="libx264",
         crf=23,
         resolution=(1280, 720),
         on_progress=on_progress,
     )
+
 
 asyncio.run(main())
 ```
@@ -94,10 +99,12 @@ client = FFmpegClient()
 info = await client.probe("input.mp4")
 total_us = int(info.duration * 1_000_000)
 
+
 async def on_progress(p: ProgressInfo):
     if total_us > 0:
         percent = (p.out_time_us / total_us) * 100
         print(f"{percent:.1f}% | {p.speed}")
+
 
 await client.transcode("input.mp4", "output.mp4", on_progress=on_progress)
 ```
@@ -150,19 +157,19 @@ async def transcode(
     input: str | Path,
     output: str | Path,
     *,
-    video_codec: str | None = None,       # "libx264", "libx265", "copy"
-    audio_codec: str | None = None,       # "aac", "libopus", "copy"
-    video_bitrate: str | None = None,     # "5M", "2500k"
-    audio_bitrate: str | None = None,     # "128k", "192k"
+    video_codec: str | None = None,  # "libx264", "libx265", "copy"
+    audio_codec: str | None = None,  # "aac", "libopus", "copy"
+    video_bitrate: str | None = None,  # "5M", "2500k"
+    audio_bitrate: str | None = None,  # "128k", "192k"
     resolution: tuple[int, int] | None = None,  # (1280, 720)
-    fps: float | None = None,             # 30.0
-    preset: str | None = None,            # "ultrafast"..."veryslow"
-    crf: int | None = None,               # 0-51 для x264
-    pixel_format: str | None = None,      # "yuv420p"
-    video_filters: str | None = None,     # "scale=1280:720"
-    audio_filters: str | None = None,     # "volume=1.5"
+    fps: float | None = None,  # 30.0
+    preset: str | None = None,  # "ultrafast"..."veryslow"
+    crf: int | None = None,  # 0-51 для x264
+    pixel_format: str | None = None,  # "yuv420p"
+    video_filters: str | None = None,  # "scale=1280:720"
+    audio_filters: str | None = None,  # "volume=1.5"
     metadata: dict[str, str] | None = None,
-    start: float | str | None = None,     # Начальная позиция
+    start: float | str | None = None,  # Начальная позиция
     duration: float | str | None = None,  # Длительность
     extra_args: Sequence[str] | None = None,
     timeout: float | None = None,
@@ -198,7 +205,7 @@ async def trim(
     start: float | str | None = None,
     end: float | str | None = None,
     duration: float | str | None = None,
-    copy: bool = True,                  # Stream copy по умолчанию (быстро)
+    copy: bool = True,  # Stream copy по умолчанию (быстро)
     timeout: float | None = None,
     on_progress: ProgressCallback | None = None,
 ) -> ProcessResult: ...
@@ -228,7 +235,7 @@ async def screenshot(
     *,
     timestamp: float | str = 0,
     resolution: tuple[int, int] | None = None,
-    quality: int = 2,                   # JPEG quality (2 = best)
+    quality: int = 2,  # JPEG quality (2 = best)
     timeout: float | None = None,
 ) -> ProcessResult: ...
 ```
@@ -241,7 +248,7 @@ async def convert(
     input: str | Path,
     output: str | Path,
     *,
-    copy: bool = True,                  # Stream copy (без перекодирования)
+    copy: bool = True,  # Stream copy (без перекодирования)
     timeout: float | None = None,
     on_progress: ProgressCallback | None = None,
 ) -> ProcessResult: ...
@@ -302,6 +309,7 @@ class FFmpegCommand:
 
     # === Входные файлы ===
     def input(self, path: str | Path, **opts: str | int | float) -> Self: ...
+
     # Примеры opts: ss="10", t="30", hwaccel="auto", f="lavfi"
 
     # === Фильтры ===
@@ -314,12 +322,13 @@ class FFmpegCommand:
     def audio_codec(self, codec: str, stream: str | None = None) -> Self: ...
     def subtitle_codec(self, codec: str) -> Self: ...
     def map_stream(self, spec: str) -> Self: ...
-    def no_video(self) -> Self: ...        # -vn
-    def no_audio(self) -> Self: ...        # -an
-    def no_subtitles(self) -> Self: ...    # -sn
+    def no_video(self) -> Self: ...  # -vn
+    def no_audio(self) -> Self: ...  # -an
+    def no_subtitles(self) -> Self: ...  # -sn
 
     # === Выходные файлы ===
     def output(self, path: str | Path, **opts: str | int | float) -> Self: ...
+
     # Примеры opts: preset="medium", crf="23", b_v="5M", b_a="128k"
 
     # === Metadata ===
@@ -327,7 +336,7 @@ class FFmpegCommand:
 
     # === Сборка и выполнение ===
     def build(self) -> list[str]: ...
-    def build_pretty(self) -> str: ...     # Human-readable multiline
+    def build_pretty(self) -> str: ...  # Human-readable multiline
 
     async def execute(
         self,
@@ -362,7 +371,7 @@ cmd = (
     .overwrite()
     .input("background.mp4")
     .input("overlay.png")
-    .complex_filter('[0:v]scale=1920:1080[bg];[1:v]scale=200:200[fg];[bg][fg]overlay=10:10[out]')
+    .complex_filter("[0:v]scale=1920:1080[bg];[1:v]scale=200:200[fg];[bg][fg]overlay=10:10[out]")
     .map_stream("[out]")
     .map_stream("0:a")
     .video_codec("libx264")
@@ -407,6 +416,7 @@ def rotate(angle: float) -> Filter: ...
 def pad(w: int, h: int, x: int = 0, y: int = 0) -> Filter: ...
 def trim(start: float | None = None, end: float | None = None) -> Filter: ...
 def setpts(expr: str) -> Filter: ...
+
 
 # Аудио
 def volume(level: float | str) -> Filter: ...
@@ -456,8 +466,10 @@ async-yt-dlp  ←──(optional import)──  async-ffmpeg
 # В async_ffmpeg/_types.py
 from typing import Protocol
 
+
 class DownloadResult(Protocol):
     """Протокол для результата скачивания."""
+
     @property
     def filepath(self) -> Path: ...
     @property
@@ -479,6 +491,7 @@ ytdlp = ["async-yt-dlp>=0.1.0"]
 # async_ffmpeg/integration/__init__.py
 try:
     from async_yt_dlp import DownloadResult as _YTDLPResult
+
     HAS_YTDLP = True
 except ImportError:
     HAS_YTDLP = False

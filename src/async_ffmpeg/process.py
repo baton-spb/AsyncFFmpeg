@@ -6,7 +6,8 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Self
+from types import TracebackType
+from typing import Self
 
 from async_ffmpeg._compat import get_subprocess_creation_kwargs, terminate_process_gracefully
 from async_ffmpeg._constants import (
@@ -14,7 +15,7 @@ from async_ffmpeg._constants import (
     DEFAULT_READ_BUFFER_SIZE,
     GRACEFUL_SHUTDOWN_TIMEOUT,
 )
-from async_ffmpeg._types import PathLike, ProgressCallback, StderrCallback
+from async_ffmpeg._types import PathLike, ProgressCallback, StderrCallback, StdoutLineCallback
 from async_ffmpeg.exceptions import (
     FFmpegCancelledError,
     FFmpegProcessError,
@@ -33,6 +34,11 @@ class ProcessResult:
     command: tuple[str, ...]
 
     @property
+    def is_success(self) -> bool:
+        """Завершился ли процесс успешно с нулевым кодом возврата (0)."""
+        return self.exit_code == 0
+
+    @property
     def success(self) -> bool:
         """Успешно ли завершился процесс (код возврата равен 0)."""
         return self.exit_code == 0
@@ -48,8 +54,16 @@ class ProcessResult:
         return self.stderr.decode(errors="replace")
 
 
-async def _invoke_callback(callback: Callable[..., Any], *args: Any) -> None:
-    """Вызывает пользовательский коллбэк, поддерживая как синхронные, так и асинхронные функции."""
+async def _invoke_callback(  # type: ignore[explicit-any]
+    callback: Callable[..., object],
+    *args: object,
+) -> None:
+    """Вызывает пользовательский коллбэк, поддерживая как синхронные, так и асинхронные функции.
+
+    Args:
+        callback: Функция обратного вызова (корутина или обычная функция).
+        *args: Позиционные аргументы для передачи в коллбэк.
+    """
     try:
         if inspect.iscoroutinefunction(callback):
             await callback(*args)
@@ -81,6 +95,14 @@ class ProcessRunner:
         default_timeout: float | None = None,
         graceful_timeout: float = GRACEFUL_SHUTDOWN_TIMEOUT,
     ) -> None:
+        """Инициализирует диспетчер выполнения подпроцессов FFmpeg.
+
+        Args:
+            max_concurrent: Максимальное число одновременно выполняемых процессов.
+            semaphore: Внешний семафор для синхронизации очереди задач.
+            default_timeout: Таймаут по умолчанию в секундах.
+            graceful_timeout: Таймаут штатного завершения перед принудительным kill.
+        """
         self._max_concurrent = max(1, max_concurrent)
         self._semaphore = semaphore or asyncio.Semaphore(self._max_concurrent)
         self._default_timeout = default_timeout
@@ -98,9 +120,16 @@ class ProcessRunner:
         return len(self._active_processes)
 
     async def __aenter__(self) -> Self:
+        """Вход в асинхронный контекстный менеджер."""
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Выход из контекстного менеджера с отменой активных процессов."""
         await self.cancel_all()
 
     async def cancel_all(self, *, graceful_timeout: float | None = None) -> None:
@@ -123,7 +152,7 @@ class ProcessRunner:
         *,
         timeout: float | None = None,
         graceful_timeout: float | None = None,
-        on_stdout_line: Callable[[str], Any] | None = None,
+        on_stdout_line: StdoutLineCallback | None = None,
         on_stderr_line: StderrCallback | None = None,
         on_progress: ProgressCallback | None = None,
         check: bool = False,
@@ -165,8 +194,8 @@ class ProcessRunner:
             process: asyncio.subprocess.Process | None = None
             stdout_task: asyncio.Task[None] | None = None
             stderr_task: asyncio.Task[None] | None = None
-
             try:
+                # creation_kwargs содержит creationflags (Windows) или start_new_session (Unix)
                 process = await asyncio.create_subprocess_exec(
                     *cmd_strs,
                     stdin=asyncio.subprocess.PIPE,
@@ -175,7 +204,7 @@ class ProcessRunner:
                     cwd=str(cwd) if cwd is not None else None,
                     env=env,
                     limit=read_buffer_size,
-                    **creation_kwargs,
+                    **creation_kwargs,  # type: ignore[arg-type]
                 )
                 self._active_processes.add(process)
 
@@ -185,7 +214,7 @@ class ProcessRunner:
                 async def _read_stream(
                     reader: asyncio.StreamReader,
                     chunks: list[bytes],
-                    line_callback: Callable[..., Any] | None,
+                    line_callback: Callable[[str], object] | None,
                 ) -> None:
                     while True:
                         line = await reader.readline()

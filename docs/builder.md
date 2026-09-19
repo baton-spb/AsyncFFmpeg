@@ -77,6 +77,7 @@ ffmpeg [глобальные флаги] [опции входа] -i input [фи�
 import asyncio
 from async_ffmpeg import FFmpegCommand
 
+
 async def main():
     cmd = (
         FFmpegCommand()
@@ -100,6 +101,7 @@ async def main():
 
     result = await cmd.execute()
     print("Код возврата:", result.exit_code)
+
 
 asyncio.run(main())
 ```

@@ -5,10 +5,10 @@ FFmpeg выводит прогресс блоками key=value, заверша�
 расчётом процента выполнения (percent) и примерного времени завершения (ETA).
 """
 
+import asyncio
 import re
 from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
-from typing import Any
 
 from async_ffmpeg._types import ProgressCallback
 
@@ -137,6 +137,12 @@ class ProgressParser:
         total_duration: float | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> None:
+        """Инициализирует построчный парсер прогресса FFmpeg.
+
+        Args:
+            total_duration: Общая длительность медиафайла в секундах для расчета процента.
+            on_progress: Опциональный коллбэк для вызова при получении нового блока прогресса.
+        """
         self.total_duration = total_duration
         self._on_progress = on_progress
         self._current_block: dict[str, str] = {}
@@ -210,12 +216,21 @@ class ProgressParser:
 
 
 async def parse_progress_stream(
-    stream: Any,
+    stream: asyncio.StreamReader,
     *,
     total_duration: float | None = None,
     on_progress: ProgressCallback | None = None,
 ) -> AsyncIterator[ProgressInfo]:
-    """Асинхронный генератор, читающий поток строк и отдающий объекты ProgressInfo."""
+    """Асинхронный генератор, читающий поток строк и отдающий объекты ProgressInfo.
+
+    Args:
+        stream: Асинхронный поток чтения StreamReader (stdout FFmpeg).
+        total_duration: Длительность медиа в секундах для вычисления процентов.
+        on_progress: Опциональный коллбэк для вызова при каждом обновлении прогресса.
+
+    Yields:
+        Объекты ProgressInfo с текущей статистикой кодирования.
+    """
     parser = ProgressParser(total_duration=total_duration, on_progress=on_progress)
     while True:
         line_bytes = await stream.readline()

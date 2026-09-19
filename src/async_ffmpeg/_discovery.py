@@ -211,7 +211,7 @@ async def get_binary_version(binary_path: PathLike) -> str:
             "-version",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            **creation_kwargs,
+            **creation_kwargs,  # type: ignore[arg-type]
         )
         stdout_data, _ = await asyncio.wait_for(proc.communicate(), timeout=5.0)
         if proc.returncode == 0 and stdout_data:

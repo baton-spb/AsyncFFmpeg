@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from async_ffmpeg.pipeline import MediaPipeline
@@ -33,6 +33,7 @@ from async_ffmpeg._constants import (
 )
 from async_ffmpeg._discovery import find_ffmpeg
 from async_ffmpeg._types import (
+    CommandOptionValue,
     ConcatMethod,
     PathLike,
     ProgressCallback,
@@ -64,6 +65,15 @@ class FFmpegClient:
         default_timeout: float | None = None,
         temp_dir: PathLike | None = None,
     ) -> None:
+        """Инициализирует высокоуровневый клиент FFmpegClient.
+
+        Args:
+            ffmpeg_path: Пользовательский путь к бинарнику ffmpeg.
+            ffprobe_path: Пользовательский путь к бинарнику ffprobe.
+            max_concurrent: Максимальное число параллельных процессов.
+            default_timeout: Таймаут по умолчанию для длительных операций в секундах.
+            temp_dir: Пользовательская директория для временных файлов.
+        """
         self._ffmpeg_path = ffmpeg_path
         self._ffprobe_path = ffprobe_path
         self._default_timeout = default_timeout
@@ -131,6 +141,7 @@ class FFmpegClient:
         )
 
     async def __aenter__(self) -> Self:
+        """Вход в асинхронный контекстный менеджер клиента."""
         await self._runner.__aenter__()
         return self
 
@@ -140,6 +151,7 @@ class FFmpegClient:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
+        """Выход из контекстного менеджера с очисткой временных файлов и отменой незавершенных задач."""
         try:
             # Очищаем временные файлы списка конкатенации
             for tmp in self._created_temp_files:
@@ -219,7 +231,7 @@ class FFmpegClient:
         cmd = self.create_command().overwrite()
 
         # Входные опции
-        input_opts: dict[str, Any] = {}
+        input_opts: dict[str, CommandOptionValue] = {}
         if start is not None:
             input_opts["ss"] = start
         if duration is not None:
@@ -360,11 +372,11 @@ class FFmpegClient:
 
         Если `copy=True`, выполняется мгновенная обрезка через stream copy без перекодирования.
         """
-        input_opts: dict[str, Any] = {}
+        input_opts: dict[str, CommandOptionValue] = {}
         if start is not None:
             input_opts["ss"] = start
 
-        output_opts: dict[str, Any] = {}
+        output_opts: dict[str, CommandOptionValue] = {}
         if end is not None:
             output_opts["to"] = end
         elif duration is not None:

@@ -56,6 +56,7 @@ uv add async-ffmpeg
 import asyncio
 from async_ffmpeg import FFmpegClient
 
+
 async def main():
     client = FFmpegClient()
     info = await client.probe("video.mp4")
@@ -71,6 +72,7 @@ async def main():
         a = info.primary_audio
         print(f"Аудио: {a.codec_name}, {a.sample_rate} Hz, каналов: {a.channels}")
 
+
 asyncio.run(main())
 ```
 
@@ -79,6 +81,7 @@ asyncio.run(main())
 ```python
 import asyncio
 from async_ffmpeg import FFmpegClient, ProgressInfo
+
 
 async def main():
     client = FFmpegClient()
@@ -97,6 +100,7 @@ async def main():
         on_progress=on_progress,
     )
     print(f"Успешно за {result.duration_seconds:.2f} сек!")
+
 
 asyncio.run(main())
 ```

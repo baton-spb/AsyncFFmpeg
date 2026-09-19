@@ -10,7 +10,6 @@ import signal
 import subprocess
 import sys
 from contextlib import suppress
-from typing import Any
 
 from async_ffmpeg._constants import FORCE_KILL_TIMEOUT, GRACEFUL_SHUTDOWN_TIMEOUT
 from async_ffmpeg._types import PathLike
@@ -20,13 +19,16 @@ IS_MACOS: bool = sys.platform == "darwin"
 IS_LINUX: bool = sys.platform.startswith("linux")
 
 
-def get_subprocess_creation_kwargs() -> dict[str, Any]:
+def get_subprocess_creation_kwargs() -> dict[str, int | bool]:
     """Возвращает платформо-зависимые аргументы для `asyncio.create_subprocess_exec`.
 
     - На Windows: предотвращает всплытие консольного окна и создаёт новую группу процессов.
     - На Unix: создаёт новую сессию (`start_new_session=True`), изолируя процесс от родителя.
+
+    Returns:
+        Словарь платформенных аргументов для создания подпроцесса.
     """
-    kwargs: dict[str, Any] = {}
+    kwargs: dict[str, int | bool] = {}
     if IS_WINDOWS:
         flags = 0
         # Предотвращение создания окна консоли в фоновом режиме
@@ -123,6 +125,12 @@ def normalize_path_for_ffmpeg(path: PathLike) -> str:
     На Windows заменяет обратные слэши `\\` на прямые `/`, чтобы избежать
     ошибочной интерпретации экранирующих последовательностей в CLI и фильтрах.
     Сохраняет относительные пути, сетевые URL и специальные выражения (lavfi, pipe).
+
+    Args:
+        path: Исходный путь к файлу или URL.
+
+    Returns:
+        Нормализованная строка пути с прямыми слэшами.
     """
     str_path = str(path)
     if IS_WINDOWS:
@@ -135,6 +143,12 @@ def escape_filter_path(path: PathLike) -> str:
 
     В filtergraph двоеточие (`:`) и обратный слэш (`\\`) являются спецсимволами.
     Например: `C:/path/video.mp4` -> `C\\:/path/video.mp4`.
+
+    Args:
+        path: Исходный путь к файлу.
+
+    Returns:
+        Экранированная строка пути, безопасная для подстановки в filtergraph.
     """
     normalized = normalize_path_for_ffmpeg(path)
     # Экранируем двоеточия (букву диска на Windows, e.g. C:)

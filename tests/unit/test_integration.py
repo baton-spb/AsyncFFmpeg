@@ -105,3 +105,18 @@ async def test_download_post_processor_callable(sample_download_file: FakeDownlo
     assert res.media_info is not None
     assert res.media_info.primary_video is not None
     assert res.media_info.primary_video.width == 128
+
+
+@pytest.mark.asyncio
+async def test_transcode_download_function(sample_download_file: FakeDownloadResult) -> None:
+    """Проверяет вызов функции transcode_download."""
+    res = await transcode_download(
+        sample_download_file,
+        resolution=(128, 96),
+        video_codec="libx264",
+    )
+    assert res.result.success
+    assert res.output.exists()
+    assert res.media_info is not None
+    assert res.media_info.primary_video is not None
+    assert res.media_info.primary_video.width == 128

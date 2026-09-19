@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from async_ffmpeg._constants import DEFAULT_AUDIO_BITRATE, DEFAULT_VIDEO_CRF
 from async_ffmpeg._types import DownloadResultProtocol, PathLike, ProgressCallback
@@ -68,7 +68,7 @@ async def process_download_result(
         probe_output: Анализировать ли итоговый файл через FFprobe.
         on_progress: Функция обратного вызова для отслеживания прогресса.
     """
-    source_path, title, duration = _resolve_source_path_and_metadata(download)
+    source_path, title, _duration = _resolve_source_path_and_metadata(download)
     cli = client if client is not None else FFmpegClient()
 
     if output is None:
@@ -181,11 +181,18 @@ class DownloadPostProcessor:
         action: PostProcessAction = "transcode",
         *,
         client: FFmpegClient | None = None,
-        **options: Any,
+        **options: object,
     ) -> None:
+        """Инициализирует постобработчик результатов загрузки.
+
+        Args:
+            action: Действие обработки ('transcode', 'extract_audio', 'convert').
+            client: Экземпляр FFmpegClient для исполнения команд.
+            **options: Дополнительные параметры постобработки.
+        """
         self._action = action
         self._client = client
-        self._options = options
+        self._options: dict[str, object] = options
 
     async def __call__(self, download: DownloadResultProtocol | PathLike) -> PostProcessResult:
         """Выполняет постобработку при вызове экземпляра."""
@@ -193,5 +200,5 @@ class DownloadPostProcessor:
             download=download,
             action=self._action,
             client=self._client,
-            **self._options,
+            **self._options,  # type: ignore[arg-type]
         )

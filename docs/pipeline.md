@@ -48,6 +48,7 @@
 import asyncio
 from async_ffmpeg import FFmpegClient, ProgressInfo
 
+
 async def main():
     client = FFmpegClient()
 
@@ -84,6 +85,7 @@ async def main():
 
     result = await pipeline.run(on_progress=on_prog)
     print(f"\nУспешно завершено за {result.duration_seconds:.2f} сек!")
+
 
 asyncio.run(main())
 ```

@@ -29,6 +29,7 @@ import asyncio
 from async_yt_dlp import AsyncYoutubeDL
 from async_ffmpeg.integration import process_download_result
 
+
 async def main():
     # 1. Скачиваем видео через async-yt-dlp
     async with AsyncYoutubeDL() as ytdl:
@@ -46,6 +47,7 @@ async def main():
     print(f"Исходный файл: {processed.source}")
     print(f"Обработанный файл: {processed.output}")
     print(f"Длительность обработки: {processed.duration_seconds:.2f} сек")
+
 
 asyncio.run(main())
 ```

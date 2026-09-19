@@ -8,11 +8,11 @@
 
 ```python
 client = FFmpegClient(
-    max_concurrent=4,          # Максимум 4 параллельных процесса FFmpeg
-    default_timeout=600.0,      # Таймаут по умолчанию на операцию (сек)
-    temp_dir="/tmp/ffmpeg",     # Каталог для временных файлов списков конкатенации
-    ffmpeg_path=None,           # Путь к ffmpeg (None = автопоиск)
-    ffprobe_path=None,          # Путь к ffprobe (None = автопоиск)
+    max_concurrent=4,  # Максимум 4 параллельных процесса FFmpeg
+    default_timeout=600.0,  # Таймаут по умолчанию на операцию (сек)
+    temp_dir="/tmp/ffmpeg",  # Каталог для временных файлов списков конкатенации
+    ffmpeg_path=None,  # Путь к ffmpeg (None = автопоиск)
+    ffprobe_path=None,  # Путь к ffprobe (None = автопоиск)
 )
 ```
 

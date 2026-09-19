@@ -85,10 +85,12 @@ async_ffmpeg/
 @dataclass(frozen=True, slots=True)
 class ProcessResult:
     """Результат выполнения FFmpeg/FFprobe процесса."""
+
     exit_code: int
     stdout: bytes
     stderr: bytes
     duration_seconds: float
+
 
 class ProcessRunner:
     """Асинхронный runner для FFmpeg/FFprobe процессов."""
@@ -115,21 +117,23 @@ class ProcessRunner:
 @dataclass(frozen=True, slots=True)
 class ProgressInfo:
     """Один блок прогресса от FFmpeg."""
-    frame: int | None        # None для audio-only
+
+    frame: int | None  # None для audio-only
     fps: float
-    bitrate: str             # Может быть "N/A"
-    total_size: int | None   # None если "N/A"
-    out_time_us: int         # Микросекунды
-    out_time: str            # "HH:MM:SS.ffffff"
-    speed: str               # e.g. "2.32x"
+    bitrate: str  # Может быть "N/A"
+    total_size: int | None  # None если "N/A"
+    out_time_us: int  # Микросекунды
+    out_time: str  # "HH:MM:SS.ffffff"
+    speed: str  # e.g. "2.32x"
     dup_frames: int
     drop_frames: int
-    is_finished: bool        # True если progress=end
+    is_finished: bool  # True если progress=end
 
     @property
     def percent(self) -> float | None:
         """Процент завершения (требуется total_duration_us)."""
         ...
+
 
 # Type alias для callback
 ProgressCallback = Callable[[ProgressInfo], None] | Callable[[ProgressInfo], Awaitable[None]]
@@ -184,11 +188,12 @@ class VideoStream:
     width: int
     height: int
     pix_fmt: str
-    frame_rate: float          # Вычисляется из r_frame_rate "30/1"
-    duration: float | None     # В секундах
+    frame_rate: float  # Вычисляется из r_frame_rate "30/1"
+    duration: float | None  # В секундах
     bit_rate: int | None
     nb_frames: int | None
     # ...
+
 
 @dataclass(frozen=True, slots=True)
 class AudioStream:
@@ -203,12 +208,14 @@ class AudioStream:
     bit_rate: int | None
     # ...
 
+
 @dataclass(frozen=True, slots=True)
 class SubtitleStream:
     index: int
     codec_name: str
     codec_long_name: str
     # ...
+
 
 @dataclass(frozen=True, slots=True)
 class MediaFormat:
@@ -220,6 +227,7 @@ class MediaFormat:
     size: int | None
     bit_rate: int | None
     tags: dict[str, str]
+
 
 @dataclass(frozen=True, slots=True)
 class MediaInfo:
@@ -240,6 +248,7 @@ class MediaInfo:
     @property
     def primary_audio(self) -> AudioStream | None: ...
 
+
 class FFprobe:
     """Асинхронный клиент FFprobe."""
 
@@ -253,11 +262,15 @@ class FFprobe:
 ```python
 class Filter:
     """Один фильтр в цепочке."""
+
     def __init__(self, name: str, **kwargs: str | int | float): ...
+
 
 class FilterChain:
     """Цепочка фильтров (разделитель ',')."""
+
     def append(self, filter: Filter) -> Self: ...
+
 
 class FilterGraph:
     """Simple или Complex filtergraph."""
@@ -270,8 +283,10 @@ class FilterGraph:
     @classmethod
     def complex(cls) -> ComplexFilterGraph: ...
 
+
 class ComplexFilterGraph(FilterGraph):
     """Complex filtergraph с метками потоков."""
+
     def chain(self, inputs: list[str], filters: list[Filter], outputs: list[str]) -> Self: ...
 ```
 
@@ -393,9 +408,11 @@ class FFmpegClient:
 @dataclass(frozen=True, slots=True)
 class HWAccelInfo:
     """Информация о доступном HW-ускорителе."""
-    name: str                          # e.g. "cuda", "qsv", "amf"
-    encoders: tuple[str, ...]          # e.g. ("h264_nvenc", "hevc_nvenc")
-    decoders: tuple[str, ...]          # e.g. ("h264_cuvid", "hevc_cuvid")
+
+    name: str  # e.g. "cuda", "qsv", "amf"
+    encoders: tuple[str, ...]  # e.g. ("h264_nvenc", "hevc_nvenc")
+    decoders: tuple[str, ...]  # e.g. ("h264_cuvid", "hevc_cuvid")
+
 
 class HardwareAccel:
     """Обнаружение и конфигурация HW-ускорения."""
@@ -424,32 +441,42 @@ class HardwareAccel:
 class AsyncFFmpegError(Exception):
     """Базовое исключение async-ffmpeg."""
 
+
 class FFmpegNotFoundError(AsyncFFmpegError):
     """FFmpeg/FFprobe не найден в системе."""
 
+
 class FFmpegProcessError(AsyncFFmpegError):
     """Процесс FFmpeg завершился с ошибкой."""
+
     exit_code: int
     stderr: str
     command: list[str]
 
+
 class FFmpegTimeoutError(AsyncFFmpegError):
     """Таймаут выполнения FFmpeg."""
+
 
 class FFmpegCancelledError(AsyncFFmpegError):
     """Операция была отменена."""
 
+
 class FFprobeError(AsyncFFmpegError):
     """Ошибка FFprobe."""
+
 
 class InvalidInputError(AsyncFFmpegError):
     """Невалидный входной файл."""
 
+
 class CodecNotFoundError(AsyncFFmpegError):
     """Запрошенный кодек недоступен."""
 
+
 class FilterError(AsyncFFmpegError):
     """Ошибка в filtergraph."""
+
 
 class CommandBuildError(AsyncFFmpegError):
     """Ошибка построения команды."""
@@ -498,7 +525,7 @@ class CommandBuildError(AsyncFFmpegError):
 ```python
 async def get_version() -> str:
     """Получить версию FFmpeg."""
-    result = await run_process(['ffmpeg', '-version'])
+    result = await run_process(["ffmpeg", "-version"])
     # Parse "ffmpeg version 9.0.1-full_build..."
     return version_string
 ```

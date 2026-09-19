@@ -390,7 +390,7 @@ loudnorm AVOptions:
 #### Метод 1: Отправка 'q' в stdin (РЕКОМЕНДУЕТСЯ)
 
 ```python
-process.stdin.write(b'q')
+process.stdin.write(b"q")
 process.stdin.flush()
 await process.wait()
 ```
@@ -496,10 +496,11 @@ ffmpeg -decoders | grep cuvid        # Проверка декодировщик
 
 ```python
 process = await asyncio.create_subprocess_exec(
-    'ffmpeg', *args,
-    stdin=asyncio.subprocess.PIPE,    # Для graceful shutdown
-    stdout=asyncio.subprocess.PIPE,   # Для прогресса (-progress pipe:1)
-    stderr=asyncio.subprocess.PIPE,   # Для логов ошибок
+    "ffmpeg",
+    *args,
+    stdin=asyncio.subprocess.PIPE,  # Для graceful shutdown
+    stdout=asyncio.subprocess.PIPE,  # Для прогресса (-progress pipe:1)
+    stderr=asyncio.subprocess.PIPE,  # Для логов ошибок
 )
 ```
 
@@ -518,10 +519,10 @@ async def _read_progress(process):
     block = {}
     async for line in process.stdout:
         line = line.decode().strip()
-        if '=' in line:
-            key, _, value = line.partition('=')
+        if "=" in line:
+            key, _, value = line.partition("=")
             block[key] = value.strip()
-            if key == 'progress':
+            if key == "progress":
                 yield dict(block)
                 block.clear()
 ```
@@ -530,6 +531,7 @@ async def _read_progress(process):
 
 ```python
 semaphore = asyncio.Semaphore(max_concurrent)
+
 
 async def process_file(input_path):
     async with semaphore:
@@ -543,7 +545,7 @@ async def process_file(input_path):
 try:
     await asyncio.wait_for(process.communicate(), timeout=300)
 except asyncio.TimeoutError:
-    process.stdin.write(b'q')  # Graceful shutdown
+    process.stdin.write(b"q")  # Graceful shutdown
     await asyncio.wait_for(process.wait(), timeout=5)
     if process.returncode is None:
         process.kill()  # Последний resort

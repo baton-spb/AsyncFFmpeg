@@ -19,10 +19,11 @@ result = await pipeline.run(on_progress=my_callback)
 
 from contextlib import suppress
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
 from async_ffmpeg._discovery import find_ffmpeg, find_ffprobe
 from async_ffmpeg._types import (
+    CommandOptionValue,
     MediaInputProtocol,
     PathLike,
     ProgressCallback,
@@ -109,12 +110,20 @@ class MediaPipeline:
         ffmpeg_path: PathLike | None = None,
         ffprobe_path: PathLike | None = None,
     ) -> None:
+        """Инициализирует конвейер обработки медиаданных.
+
+        Args:
+            input: Исходный входной медиафайл или URL (опционально).
+            client: Экземпляр FFmpegClient для исполнения задач.
+            ffmpeg_path: Пользовательский путь к бинарнику ffmpeg.
+            ffprobe_path: Пользовательский путь к бинарнику ffprobe.
+        """
         self._client = client
         self._ffmpeg_path = ffmpeg_path
         self._ffprobe_path = ffprobe_path
 
         # Входы
-        self._inputs: list[tuple[PathLike | MediaInputProtocol, dict[str, Any]]] = []
+        self._inputs: list[tuple[PathLike | MediaInputProtocol, dict[str, CommandOptionValue]]] = []
         if input is not None:
             self.input(input)
 
@@ -162,19 +171,35 @@ class MediaPipeline:
         self._extra_args: list[str] = []
 
         # Выходы
-        self._outputs: list[tuple[PathLike, dict[str, Any]]] = []
+        self._outputs: list[tuple[PathLike, dict[str, CommandOptionValue]]] = []
 
     # ========================================================================
     # Входные файлы и аппаратное ускорение
     # ========================================================================
 
-    def input(self, target: PathLike | MediaInputProtocol, **opts: Any) -> Self:
-        """Добавляет входной источник данных к конвейеру."""
+    def input(self, target: PathLike | MediaInputProtocol, **opts: CommandOptionValue) -> Self:
+        """Добавляет входной источник данных к конвейеру.
+
+        Args:
+            target: Путь к файлу, URL или объект, реализующий MediaInputProtocol.
+            **opts: Опции, применяемые к данному входному файлу.
+
+        Returns:
+            Экземпляр MediaPipeline для цепочечных вызовов.
+        """
         self._inputs.append((target, opts))
         return self
 
-    def add_input(self, target: PathLike | MediaInputProtocol, **opts: Any) -> Self:
-        """Алиас для input()."""
+    def add_input(self, target: PathLike | MediaInputProtocol, **opts: CommandOptionValue) -> Self:
+        """Добавляет дополнительный входной источник данных к конвейеру.
+
+        Args:
+            target: Путь к файлу, URL или объект, реализующий MediaInputProtocol.
+            **opts: Опции входного файла.
+
+        Returns:
+            Экземпляр MediaPipeline для цепочечных вызовов.
+        """
         return self.input(target, **opts)
 
     def hwaccel(
@@ -518,12 +543,22 @@ class MediaPipeline:
         self._extra_args.extend(args)
         return self
 
-    # ========================================================================
-    # Выходные файлы
-    # ========================================================================
+    def output(
+        self,
+        target: PathLike,
+        format: str | None = None,  # noqa: A002
+        **opts: CommandOptionValue,
+    ) -> Self:
+        """Добавляет выходной файл в конвейер обработки.
 
-    def output(self, target: PathLike, format: str | None = None, **opts: Any) -> Self:  # noqa: A002
-        """Добавляет выходной файл в конвейер."""
+        Args:
+            target: Путь к целевому файлу для сохранения результата.
+            format: Принудительный формат контейнера (флаг -f).
+            **opts: Дополнительные опции выходного потока.
+
+        Returns:
+            Экземпляр MediaPipeline для цепочечных вызовов.
+        """
         out_opts = dict(opts)
         if format is not None:
             out_opts["f"] = format

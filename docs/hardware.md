@@ -20,6 +20,7 @@
 import asyncio
 from async_ffmpeg import HardwareAccel
 
+
 async def main():
     hw = HardwareAccel()
     caps = await hw.detect_hardware()
@@ -34,6 +35,7 @@ async def main():
     # Интеллектуальный подбор лучшего кодека
     best_h264 = await hw.best_encoder("h264", prefer_hw=True, verify_working=True)
     print(f"Выбранный H.264 кодировщик: {best_h264}")
+
 
 asyncio.run(main())
 ```

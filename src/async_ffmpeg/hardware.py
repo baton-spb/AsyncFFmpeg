@@ -353,6 +353,12 @@ class HardwareAccel:
         ffmpeg_path: PathLike | None = None,
         runner: ProcessRunner | None = None,
     ) -> None:
+        """Инициализирует менеджер аппаратного ускорения FFmpeg.
+
+        Args:
+            ffmpeg_path: Пользовательский путь к бинарнику ffmpeg.
+            runner: Экземпляр ProcessRunner для выполнения команд проверки.
+        """
         self._ffmpeg_path = ffmpeg_path
         self._runner = runner or ProcessRunner()
         self._cached_accels: tuple[str, ...] | None = None
@@ -361,6 +367,11 @@ class HardwareAccel:
         self._verified_encoders: dict[str, bool] = {}
 
     def _resolve_ffmpeg(self) -> str:
+        """Разрешает путь к бинарнику ffmpeg, используя заданный путь или автопоиск.
+
+        Returns:
+            Строковый абсолютный путь к бинарнику ffmpeg.
+        """
         if self._ffmpeg_path:
             return str(self._ffmpeg_path)
         return str(find_ffmpeg())
