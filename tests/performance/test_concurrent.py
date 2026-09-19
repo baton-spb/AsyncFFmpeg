@@ -50,7 +50,7 @@ async def test_concurrent_cancellation_stress(tmp_path: Path) -> None:
         cmd = (
             client.create_command()
             .overwrite()
-            .input("color=c=red:s=320x240:d=10.0", f="lavfi")
+            .input("color=c=red:s=320x240:d=60.0", f="lavfi")
             .video_codec("libx264")
             .preset("ultrafast")
             .output(out_file)
@@ -60,7 +60,7 @@ async def test_concurrent_cancellation_stress(tmp_path: Path) -> None:
     tasks = [asyncio.create_task(run_long_job(i)) for i in range(4)]
 
     # Даем процессам запуститься
-    await asyncio.sleep(0.3)
+    await asyncio.sleep(0.05)
 
     # Отменяем все задачи
     for t in tasks:
@@ -70,9 +70,7 @@ async def test_concurrent_cancellation_stress(tmp_path: Path) -> None:
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     cancelled_count = sum(
-        1
-        for res in results
-        if isinstance(res, (asyncio.CancelledError, FFmpegCancelledError))
+        1 for res in results if isinstance(res, (asyncio.CancelledError, FFmpegCancelledError))
     )
     assert cancelled_count > 0
 

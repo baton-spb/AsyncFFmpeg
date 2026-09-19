@@ -52,6 +52,11 @@ class ProgressInfo:
         return None
 
     @property
+    def percentage(self) -> float | None:
+        """Алиас для percent."""
+        return self.percent
+
+    @property
     def eta_seconds(self) -> float | None:
         """Примерное оставшееся время в секундах (если известны общая длительность и скорость)."""
         if self.is_finished:

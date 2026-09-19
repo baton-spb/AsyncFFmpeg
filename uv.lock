@@ -109,6 +109,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "async-ffmpeg", marker = "extra == 'ffmpeg'", directory = "." },
+    { name = "async-ffmpeg", marker = "extra == 'full'", directory = "." },
     { name = "brotli", marker = "extra == 'full'", specifier = ">=1.0.0" },
     { name = "certifi", marker = "extra == 'full'", specifier = ">=2024.1.1" },
     { name = "coverage", marker = "extra == 'dev'", specifier = ">=7.6.0" },
@@ -127,7 +129,7 @@ requires-dist = [
     { name = "yt-dlp", specifier = ">=2024.1.1" },
     { name = "yt-dlp-ejs", marker = "extra == 'full'", specifier = ">=0.8.0" },
 ]
-provides-extras = ["full", "dev"]
+provides-extras = ["ffmpeg", "full", "dev"]
 
 [[package]]
 name = "colorama"
