@@ -10,7 +10,6 @@ import signal
 import subprocess
 import sys
 from contextlib import suppress
-from pathlib import Path
 from typing import Any
 
 from async_ffmpeg._constants import FORCE_KILL_TIMEOUT, GRACEFUL_SHUTDOWN_TIMEOUT
@@ -123,8 +122,9 @@ def normalize_path_for_ffmpeg(path: PathLike) -> str:
 
     На Windows заменяет обратные слэши `\\` на прямые `/`, чтобы избежать
     ошибочной интерпретации экранирующих последовательностей в CLI и фильтрах.
+    Сохраняет относительные пути, сетевые URL и специальные выражения (lavfi, pipe).
     """
-    str_path = str(Path(path).resolve())
+    str_path = str(path)
     if IS_WINDOWS:
         str_path = str_path.replace("\\", "/")
     return str_path

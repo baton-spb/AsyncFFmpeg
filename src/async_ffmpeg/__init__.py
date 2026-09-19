@@ -38,6 +38,7 @@ from async_ffmpeg._types import (
     StreamType,
     VideoPreset,
 )
+from async_ffmpeg.command import FFmpegCommand
 from async_ffmpeg.exceptions import (
     AsyncFFmpegError,
     CodecNotFoundError,
@@ -81,6 +82,7 @@ __all__ = [
     "ConcatMethod",
     "DownloadResultProtocol",
     "FFmpegCancelledError",
+    "FFmpegCommand",
     "FFmpegNotFoundError",
     "FFmpegProcessError",
     "FFmpegTimeoutError",
