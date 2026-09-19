@@ -37,6 +37,7 @@ from async_ffmpeg._types import (
     StderrCallback,
     StreamType,
     VideoPreset,
+    WatermarkPosition,
 )
 from async_ffmpeg.client import FFmpegClient
 from async_ffmpeg.command import FFmpegCommand
@@ -104,6 +105,7 @@ from async_ffmpeg.models import (
     SubtitleStream,
     VideoStream,
 )
+from async_ffmpeg.pipeline import MediaPipeline, WatermarkConfig
 from async_ffmpeg.probe import FFprobe, parse_probe_json
 from async_ffmpeg.process import ProcessResult, ProcessRunner
 from async_ffmpeg.progress import ProgressInfo, ProgressParser, parse_progress_stream
@@ -150,6 +152,7 @@ __all__ = [
     "MediaFormat",
     "MediaInfo",
     "MediaInputProtocol",
+    "MediaPipeline",
     "PathLike",
     "ProcessResult",
     "ProcessRunner",
@@ -162,6 +165,8 @@ __all__ = [
     "SubtitleStream",
     "VideoPreset",
     "VideoStream",
+    "WatermarkConfig",
+    "WatermarkPosition",
     "__version__",
     "afade",
     "amix",

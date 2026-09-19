@@ -19,7 +19,10 @@ from collections.abc import Sequence
 from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Self
+from typing import TYPE_CHECKING, Any, Self
+
+if TYPE_CHECKING:
+    from async_ffmpeg.pipeline import MediaPipeline
 
 from async_ffmpeg._compat import normalize_path_for_ffmpeg
 from async_ffmpeg._constants import (
@@ -100,6 +103,32 @@ class FFmpegClient:
     def active_processes(self) -> int:
         """Количество активных параллельных процессов в данный момент."""
         return self._runner.active_count
+
+    @property
+    def ffmpeg_path(self) -> PathLike | None:
+        """Пользовательский путь к бинарнику ffmpeg или None (автопоиск)."""
+        return self._ffmpeg_path
+
+    @property
+    def ffprobe_path(self) -> PathLike | None:
+        """Пользовательский путь к бинарнику ffprobe или None (автопоиск)."""
+        return self._ffprobe_path
+
+    @property
+    def default_timeout(self) -> float | None:
+        """Таймаут по умолчанию для длительных операций."""
+        return self._default_timeout
+
+    def pipeline(self, input: PathLike | None = None) -> MediaPipeline:  # noqa: A002
+        """Создает конвейер обработки (MediaPipeline), использующий настройки данного клиента."""
+        from async_ffmpeg.pipeline import MediaPipeline
+
+        return MediaPipeline(
+            input=input,
+            client=self,
+            ffmpeg_path=self._ffmpeg_path,
+            ffprobe_path=self._ffprobe_path,
+        )
 
     async def __aenter__(self) -> Self:
         await self._runner.__aenter__()

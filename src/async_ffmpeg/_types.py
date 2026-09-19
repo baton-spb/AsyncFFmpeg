@@ -45,6 +45,15 @@ type ConcatMethod = Literal[
     "protocol",
 ]
 
+# Позиционирование водяного знака / оверлея
+type WatermarkPosition = Literal[
+    "top-left",
+    "top-right",
+    "bottom-left",
+    "bottom-right",
+    "center",
+]
+
 # Типы элементарных медиапотоков
 type StreamType = Literal[
     "video",
