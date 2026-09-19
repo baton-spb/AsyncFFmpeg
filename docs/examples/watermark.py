@@ -4,7 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import MediaPipeline
+from aio_ffmpeg import MediaPipeline
 
 
 async def main() -> None:

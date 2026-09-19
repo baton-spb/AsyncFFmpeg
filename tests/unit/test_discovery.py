@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from async_ffmpeg._discovery import (
+from aio_ffmpeg._discovery import (
     BinaryInfo,
     _parse_version_components,
     clear_discovery_cache,
@@ -14,7 +14,7 @@ from async_ffmpeg._discovery import (
     find_ffprobe,
     get_ffmpeg_info,
 )
-from async_ffmpeg.exceptions import FFmpegNotFoundError
+from aio_ffmpeg.exceptions import FFmpegNotFoundError
 
 
 def test_parse_version_components() -> None:

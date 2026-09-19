@@ -9,15 +9,15 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from async_ffmpeg._compat import get_subprocess_creation_kwargs, terminate_process_gracefully
-from async_ffmpeg._constants import (
+from aio_ffmpeg._compat import get_subprocess_creation_kwargs, terminate_process_gracefully
+from aio_ffmpeg._constants import (
     DEFAULT_MAX_CONCURRENT,
     DEFAULT_READ_BUFFER_SIZE,
     GRACEFUL_SHUTDOWN_TIMEOUT,
 )
-from async_ffmpeg._logging import get_logger
-from async_ffmpeg._types import PathLike, ProgressCallback, StderrCallback, StdoutLineCallback
-from async_ffmpeg.exceptions import (
+from aio_ffmpeg._logging import get_logger
+from aio_ffmpeg._types import PathLike, ProgressCallback, StderrCallback, StdoutLineCallback
+from aio_ffmpeg.exceptions import (
     FFmpegCancelledError,
     FFmpegProcessError,
     FFmpegTimeoutError,

@@ -1,19 +1,6 @@
-"""Модули интеграции async-ffmpeg со сторонними экосистемами (async-yt-dlp)."""
+"""Backward compatibility shim for aio_ffmpeg.integration."""
 
-from async_ffmpeg.integration.ytdlp import (
-    DownloadPostProcessor,
-    PostProcessAction,
-    PostProcessResult,
-    extract_download_audio,
-    process_download_result,
-    transcode_download,
-)
+import aio_ffmpeg.integration as _integration
+from aio_ffmpeg.integration import *  # noqa: F403
 
-__all__ = [
-    "DownloadPostProcessor",
-    "PostProcessAction",
-    "PostProcessResult",
-    "extract_download_audio",
-    "process_download_result",
-    "transcode_download",
-]
+__all__ = [attr for attr in dir(_integration) if not attr.startswith("_")]

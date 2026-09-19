@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg import FFmpegClient
-from async_ffmpeg.integration import (
+from aio_ffmpeg import FFmpegClient
+from aio_ffmpeg.integration import (
     DownloadPostProcessor,
     PostProcessResult,
     extract_download_audio,

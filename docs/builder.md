@@ -75,7 +75,7 @@ ffmpeg [глобальные флаги] [опции входа] -i input [фи�
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegCommand
+from aio_ffmpeg import FFmpegCommand
 
 
 async def main():

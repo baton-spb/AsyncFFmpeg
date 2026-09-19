@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg.command import FFmpegCommand
-from async_ffmpeg.exceptions import FilterError
-from async_ffmpeg.filters import (
+from aio_ffmpeg.command import FFmpegCommand
+from aio_ffmpeg.exceptions import FilterError
+from aio_ffmpeg.filters import (
     ComplexFilterGraph,
     Filter,
     FilterChain,

@@ -1,10 +1,10 @@
-"""Интеграционные сквозные (E2E) тесты для библиотеки async_ffmpeg."""
+"""Интеграционные сквозные (E2E) тесты для библиотеки aio_ffmpeg."""
 
 from pathlib import Path
 
 import pytest
 
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 @pytest.mark.asyncio

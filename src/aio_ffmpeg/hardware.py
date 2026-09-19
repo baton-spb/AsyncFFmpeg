@@ -13,11 +13,11 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
-from async_ffmpeg._compat import IS_WINDOWS
-from async_ffmpeg._discovery import find_ffmpeg
-from async_ffmpeg._logging import get_logger
-from async_ffmpeg._types import PathLike
-from async_ffmpeg.process import ProcessRunner
+from aio_ffmpeg._compat import IS_WINDOWS
+from aio_ffmpeg._discovery import find_ffmpeg
+from aio_ffmpeg._logging import get_logger
+from aio_ffmpeg._types import PathLike
+from aio_ffmpeg.process import ProcessRunner
 
 logger = get_logger("hardware")
 

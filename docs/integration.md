@@ -27,7 +27,7 @@ class DownloadResultProtocol(Protocol):
 ```python
 import asyncio
 from async_yt_dlp import AsyncYoutubeDL
-from async_ffmpeg.integration import process_download_result
+from aio_ffmpeg.integration import process_download_result
 
 
 async def main():
@@ -57,7 +57,7 @@ asyncio.run(main())
 ## 3. Извлечение MP3 / M4A аудио
 
 ```python
-from async_ffmpeg.integration import extract_download_audio
+from aio_ffmpeg.integration import extract_download_audio
 
 # Преобразует скачанное видео в аудиофайл
 audio_res = await extract_download_audio(
@@ -73,7 +73,7 @@ print("Аудио сохранено в:", audio_res.output)
 ## 4. Использование в качестве Post-Processor хука
 
 ```python
-from async_ffmpeg.integration import DownloadPostProcessor
+from aio_ffmpeg.integration import DownloadPostProcessor
 
 # Создаем хук с заданными параметрами
 transcoder_hook = DownloadPostProcessor(

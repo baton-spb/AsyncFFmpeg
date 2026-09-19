@@ -1,6 +1,6 @@
 # Построитель фильтров FilterGraph и фабричные функции
 
-Модуль `async_ffmpeg.filters` предоставляет типизированную объектную модель графов фильтров FFmpeg, избавляющую разработчика от ручной конкатенации строк и ошибок экранирования специальных символов (запятых, точек с запятой, двоеточий).
+Модуль `aio_ffmpeg.filters` предоставляет типизированную объектную модель графов фильтров FFmpeg, избавляющую разработчика от ручной конкатенации строк и ошибок экранирования специальных символов (запятых, точек с запятой, двоеточий).
 
 ---
 
@@ -56,7 +56,7 @@ FFmpeg использует три уровня абстракции для фи
 ### Простой граф (Simple FilterGraph, для -vf / -af)
 
 ```python
-from async_ffmpeg.filters import FilterGraph, scale, fps
+from aio_ffmpeg.filters import FilterGraph, scale, fps
 
 fg = FilterGraph.simple(
     scale(1280, 720),
@@ -69,7 +69,7 @@ print(str(fg))
 ### Комплексный граф (ComplexFilterGraph, для -filter_complex)
 
 ```python
-from async_ffmpeg.filters import FilterGraph, scale, overlay
+from aio_ffmpeg.filters import FilterGraph, scale, overlay
 
 fg = (
     FilterGraph.complex()

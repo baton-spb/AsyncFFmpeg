@@ -11,8 +11,8 @@ import subprocess
 import sys
 from contextlib import suppress
 
-from async_ffmpeg._constants import FORCE_KILL_TIMEOUT, GRACEFUL_SHUTDOWN_TIMEOUT
-from async_ffmpeg._types import PathLike
+from aio_ffmpeg._constants import FORCE_KILL_TIMEOUT, GRACEFUL_SHUTDOWN_TIMEOUT
+from aio_ffmpeg._types import PathLike
 
 IS_WINDOWS: bool = sys.platform == "win32"
 IS_MACOS: bool = sys.platform == "darwin"

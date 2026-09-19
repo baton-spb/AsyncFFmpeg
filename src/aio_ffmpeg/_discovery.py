@@ -10,16 +10,16 @@ from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 
-from async_ffmpeg._compat import IS_WINDOWS, get_subprocess_creation_kwargs
-from async_ffmpeg._constants import (
+from aio_ffmpeg._compat import IS_WINDOWS, get_subprocess_creation_kwargs
+from aio_ffmpeg._constants import (
     DEFAULT_FFMPEG_EXECUTABLE,
     DEFAULT_FFPROBE_EXECUTABLE,
     ENV_FFMPEG_PATH,
     ENV_FFPROBE_PATH,
 )
-from async_ffmpeg._logging import get_logger
-from async_ffmpeg._types import PathLike
-from async_ffmpeg.exceptions import FFmpegNotFoundError
+from aio_ffmpeg._logging import get_logger
+from aio_ffmpeg._types import PathLike
+from aio_ffmpeg.exceptions import FFmpegNotFoundError
 
 logger = get_logger("discovery")
 

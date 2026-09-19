@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from async_ffmpeg.progress import ProgressInfo, ProgressParser, parse_progress_stream
+from aio_ffmpeg.progress import ProgressInfo, ProgressParser, parse_progress_stream
 
 SAMPLE_VIDEO_BLOCK = """
 frame=16

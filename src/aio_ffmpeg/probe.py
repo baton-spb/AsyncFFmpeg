@@ -6,13 +6,13 @@ import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from async_ffmpeg._compat import get_subprocess_creation_kwargs
-from async_ffmpeg._constants import DEFAULT_PROBE_TIMEOUT
-from async_ffmpeg._discovery import find_ffprobe
-from async_ffmpeg._logging import get_logger
-from async_ffmpeg._types import PathLike
-from async_ffmpeg.exceptions import FFprobeError, InvalidInputError
-from async_ffmpeg.models import (
+from aio_ffmpeg._compat import get_subprocess_creation_kwargs
+from aio_ffmpeg._constants import DEFAULT_PROBE_TIMEOUT
+from aio_ffmpeg._discovery import find_ffprobe
+from aio_ffmpeg._logging import get_logger
+from aio_ffmpeg._types import PathLike
+from aio_ffmpeg.exceptions import FFprobeError, InvalidInputError
+from aio_ffmpeg.models import (
     AudioStream,
     Chapter,
     MediaFormat,
@@ -22,7 +22,7 @@ from async_ffmpeg.models import (
     VideoStream,
     _parse_fraction,
 )
-from async_ffmpeg.process import ProcessRunner
+from aio_ffmpeg.process import ProcessRunner
 
 logger = get_logger("probe")
 

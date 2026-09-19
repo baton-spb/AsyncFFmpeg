@@ -11,8 +11,8 @@
 from collections.abc import Iterable, Sequence
 from typing import Self
 
-from async_ffmpeg._types import FilterParamValue
-from async_ffmpeg.exceptions import FilterError
+from aio_ffmpeg._types import FilterParamValue
+from aio_ffmpeg.exceptions import FilterError
 
 
 def _normalize_label(label: str) -> str:

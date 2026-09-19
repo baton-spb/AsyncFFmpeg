@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from async_ffmpeg._compat import (
+from aio_ffmpeg._compat import (
     IS_WINDOWS,
     escape_filter_path,
     get_subprocess_creation_kwargs,

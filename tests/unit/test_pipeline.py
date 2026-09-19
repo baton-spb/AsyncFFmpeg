@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg import (
+from aio_ffmpeg import (
     CommandBuildError,
     FFmpegClient,
     MediaPipeline,

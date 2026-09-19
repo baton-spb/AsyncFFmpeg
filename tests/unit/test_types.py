@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from async_ffmpeg._types import DownloadResultProtocol, MediaInputProtocol
+from aio_ffmpeg._types import DownloadResultProtocol, MediaInputProtocol
 
 
 class DummyDownloadResult:

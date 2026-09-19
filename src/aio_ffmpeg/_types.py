@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from async_ffmpeg.enums import (
+from aio_ffmpeg.enums import (
     AudioCodec,
     AudioFormat,
     Resolution,
@@ -14,7 +14,7 @@ from async_ffmpeg.enums import (
 )
 
 if TYPE_CHECKING:
-    from async_ffmpeg.progress import ProgressInfo
+    from aio_ffmpeg.progress import ProgressInfo
 
 # Псевдонимы путей файловой системы (PEP 695 type syntax)
 type PathLike = str | os.PathLike[str] | Path

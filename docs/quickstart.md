@@ -25,7 +25,7 @@ pip install async-ffmpeg
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main() -> None:
@@ -54,7 +54,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from aio_ffmpeg import FFmpegClient, ProgressInfo
 
 
 async def main() -> None:
@@ -89,7 +89,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main() -> None:
@@ -120,7 +120,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main() -> None:
@@ -142,7 +142,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main() -> None:

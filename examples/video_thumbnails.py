@@ -4,7 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def _ensure_input_file(client: FFmpegClient, target_dir: Path) -> Path:

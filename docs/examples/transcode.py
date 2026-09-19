@@ -4,7 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from aio_ffmpeg import FFmpegClient, ProgressInfo
 
 
 async def main() -> None:

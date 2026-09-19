@@ -1,6 +1,6 @@
 # Changelog
 
-Все заметные изменения в проекте `async-ffmpeg` документируются в этом файле.
+Все заметные изменения в проекте `aio-ffmpeg` документируются в этом файле.
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и проект придерживается [Семантического версионирования](https://semver.org/lang/ru/).
@@ -18,6 +18,6 @@
 - **Диспетчер процессов (`ProcessRunner`)**: асинхронное управление жизненным циклом подпроцессов через `asyncio.create_subprocess_exec()`, ограничение параллельности через `asyncio.Semaphore`, поддержка таймаутов и graceful shutdown (`q\n` -> SIGINT -> SIGKILL).
 - **Машиночитаемый парсер прогресса (`ProgressParser`)**: разбор протокола `-progress pipe:1` в реальном времени с вычислением процента выполнения, времени, FPS, битрейта и скорости кодирования.
 - **Объектно-ориентированный граф фильтров (`Filter`, `FilterChain`, `FilterGraph`, `ComplexFilterGraph`)**: фабричные функции для видео- и аудиофильтров (`scale`, `fps`, `crop`, `pad`, `rotate`, `overlay`, `drawtext`, `loudnorm`, `volume`, `amix`, `concat` и др.).
-- **Модуль интеграции с `async-yt-dlp` (`async_ffmpeg.integration`)**: функции `process_download_result`, `transcode_download`, `extract_download_audio` и класс `DownloadPostProcessor` на базе слабосвязанного протокола `DownloadResultProtocol`.
+- **Модуль интеграции с `async-yt-dlp` (`aio_ffmpeg.integration`)**: функции `process_download_result`, `transcode_download`, `extract_download_audio` и класс `DownloadPostProcessor` на базе слабосвязанного протокола `DownloadResultProtocol`.
 - **Комплекс интерактивных примеров (`examples/`)**: 7 готовых сценариев (`simple_transcode`, `extract_audio`, `video_thumbnails`, `watermark_and_filters`, `stream_concat`, `hardware_acceleration`, `ytdlp_pipeline`).
 - **Инфраструктура и качество**: 118 автоматических тестов с 100% прохождением, поддержка Python 3.14+, строгая статическая типизация `mypy --strict` без единого `Any`, zero runtime dependencies (только стандартная библиотека Python).

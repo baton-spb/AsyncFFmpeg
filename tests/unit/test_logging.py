@@ -1,12 +1,12 @@
-"""Тесты для модуля структурированного логирования async_ffmpeg._logging."""
+"""Тесты для модуля структурированного логирования aio_ffmpeg._logging."""
 
 import logging
 
 import pytest
 
-from async_ffmpeg import get_logger, logger
-from async_ffmpeg._logging import LOGGER_NAME
-from async_ffmpeg.process import _invoke_callback
+from aio_ffmpeg import get_logger, logger
+from aio_ffmpeg._logging import LOGGER_NAME
+from aio_ffmpeg.process import _invoke_callback
 
 
 def test_logger_hierarchy() -> None:
@@ -41,7 +41,7 @@ async def test_invoke_callback_logs_exception(caplog: pytest.LogCaptureFixture) 
     def _failing_callback(msg: str) -> None:
         raise ValueError(f"Тестовая ошибка коллбэка: {msg}")
 
-    with caplog.at_level(logging.ERROR, logger="async_ffmpeg.process"):
+    with caplog.at_level(logging.ERROR, logger="aio_ffmpeg.process"):
         # Вызов не должен выбрасывать исключение наружу
         await _invoke_callback(_failing_callback, "тест")
 
@@ -59,7 +59,7 @@ async def test_async_invoke_callback_logs_exception(caplog: pytest.LogCaptureFix
     async def _async_failing_callback(msg: str) -> None:
         raise RuntimeError(f"Асинхронная ошибка: {msg}")
 
-    with caplog.at_level(logging.ERROR, logger="async_ffmpeg.process"):
+    with caplog.at_level(logging.ERROR, logger="aio_ffmpeg.process"):
         await _invoke_callback(_async_failing_callback, "async_тест")
 
     assert len(caplog.records) == 1

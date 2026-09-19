@@ -4,7 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import AudioCodec, FFmpegClient, ProgressInfo, Resolution, VideoCodec
+from aio_ffmpeg import AudioCodec, FFmpegClient, ProgressInfo, Resolution, VideoCodec
 
 
 def _render_progress_bar(progress: ProgressInfo) -> str:

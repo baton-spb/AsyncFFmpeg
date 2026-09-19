@@ -1,6 +1,6 @@
 # Аппаратное ускорение (Hardware Acceleration)
 
-Модуль `async_ffmpeg.hardware` обеспечивает автоматическое обнаружение, верификацию и безопасное использование аппаратных ускорителей GPU / SoC (NVIDIA NVENC, Intel QSV, AMD AMF, Apple VideoToolbox, Windows MediaFoundation, D3D11VA, DXVA2, VAAPI).
+Модуль `aio_ffmpeg.hardware` обеспечивает автоматическое обнаружение, верификацию и безопасное использование аппаратных ускорителей GPU / SoC (NVIDIA NVENC, Intel QSV, AMD AMF, Apple VideoToolbox, Windows MediaFoundation, D3D11VA, DXVA2, VAAPI).
 
 ---
 
@@ -18,7 +18,7 @@
 
 ```python
 import asyncio
-from async_ffmpeg import HardwareAccel
+from aio_ffmpeg import HardwareAccel
 
 
 async def main():
@@ -58,7 +58,7 @@ asyncio.run(main())
 ## 4. Использование в MediaPipeline
 
 ```python
-from async_ffmpeg import MediaPipeline
+from aio_ffmpeg import MediaPipeline
 
 pipeline = (
     MediaPipeline("source.mkv")

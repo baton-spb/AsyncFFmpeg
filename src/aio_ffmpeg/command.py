@@ -8,10 +8,10 @@ from collections.abc import Awaitable
 from dataclasses import dataclass
 from typing import Self
 
-from async_ffmpeg._compat import normalize_path_for_ffmpeg
-from async_ffmpeg._constants import DEFAULT_LOGLEVEL, DEFAULT_STATS_PERIOD
-from async_ffmpeg._discovery import find_ffmpeg
-from async_ffmpeg._types import (
+from aio_ffmpeg._compat import normalize_path_for_ffmpeg
+from aio_ffmpeg._constants import DEFAULT_LOGLEVEL, DEFAULT_STATS_PERIOD
+from aio_ffmpeg._discovery import find_ffmpeg
+from aio_ffmpeg._types import (
     AudioCodec,
     CommandOptionValue,
     LogLevel,
@@ -22,10 +22,10 @@ from async_ffmpeg._types import (
     VideoCodec,
     VideoPreset,
 )
-from async_ffmpeg.exceptions import CommandBuildError
-from async_ffmpeg.filters import Filter, FilterChain, FilterGraph
-from async_ffmpeg.process import ProcessResult, ProcessRunner
-from async_ffmpeg.progress import ProgressParser
+from aio_ffmpeg.exceptions import CommandBuildError
+from aio_ffmpeg.filters import Filter, FilterChain, FilterGraph
+from aio_ffmpeg.process import ProcessResult, ProcessRunner
+from aio_ffmpeg.progress import ProgressParser
 
 type FilterLike = str | Filter | FilterChain | FilterGraph
 

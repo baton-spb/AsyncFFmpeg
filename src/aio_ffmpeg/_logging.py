@@ -2,7 +2,7 @@
 
 import logging
 
-LOGGER_NAME = "async_ffmpeg"
+LOGGER_NAME = "aio_ffmpeg"
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -15,7 +15,7 @@ def get_logger(submodule: str | None = None) -> logging.Logger:
                    Если None, возвращается корневой логгер библиотеки.
 
     Returns:
-        Экземпляр logging.Logger с иерархическим именем 'async_ffmpeg.<submodule>'.
+        Экземпляр logging.Logger с иерархическим именем 'aio_ffmpeg.<submodule>'.
     """
     if submodule:
         return logging.getLogger(f"{LOGGER_NAME}.{submodule}")

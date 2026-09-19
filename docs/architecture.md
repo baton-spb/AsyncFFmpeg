@@ -9,7 +9,7 @@
 ## 1. Обзор модулей
 
 ```
-async_ffmpeg/
+aio_ffmpeg/
 ├── __init__.py              # Публичный API, re-exports
 ├── py.typed                 # PEP 561 маркер
 ├── _constants.py            # Константы (таймауты, пути)

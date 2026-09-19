@@ -21,9 +21,9 @@ from contextlib import suppress
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
 
-from async_ffmpeg._discovery import find_ffmpeg, find_ffprobe
-from async_ffmpeg._logging import get_logger
-from async_ffmpeg._types import (
+from aio_ffmpeg._discovery import find_ffmpeg, find_ffprobe
+from aio_ffmpeg._logging import get_logger
+from aio_ffmpeg._types import (
     AudioCodec,
     CommandOptionValue,
     MediaInputProtocol,
@@ -34,9 +34,9 @@ from async_ffmpeg._types import (
     VideoPreset,
     WatermarkPosition,
 )
-from async_ffmpeg.command import FFmpegCommand
-from async_ffmpeg.exceptions import CommandBuildError
-from async_ffmpeg.filters import (
+from aio_ffmpeg.command import FFmpegCommand
+from aio_ffmpeg.exceptions import CommandBuildError
+from aio_ffmpeg.filters import (
     ComplexFilterGraph,
     Filter,
     FilterChain,
@@ -49,29 +49,29 @@ from async_ffmpeg.filters import (
     pad,
     volume,
 )
-from async_ffmpeg.filters import (
+from aio_ffmpeg.filters import (
     fps as fps_filter,
 )
-from async_ffmpeg.filters import (
+from aio_ffmpeg.filters import (
     hflip as hflip_filter,
 )
-from async_ffmpeg.filters import (
+from aio_ffmpeg.filters import (
     rotate as rotate_filter,
 )
-from async_ffmpeg.filters import (
+from aio_ffmpeg.filters import (
     scale as scale_filter,
 )
-from async_ffmpeg.filters import (
+from aio_ffmpeg.filters import (
     transpose as transpose_filter,
 )
-from async_ffmpeg.filters import (
+from aio_ffmpeg.filters import (
     vflip as vflip_filter,
 )
-from async_ffmpeg.probe import FFprobe
-from async_ffmpeg.process import ProcessResult, ProcessRunner
+from aio_ffmpeg.probe import FFprobe
+from aio_ffmpeg.process import ProcessResult, ProcessRunner
 
 if TYPE_CHECKING:
-    from async_ffmpeg.client import FFmpegClient
+    from aio_ffmpeg.client import FFmpegClient
 
 logger = get_logger("pipeline")
 

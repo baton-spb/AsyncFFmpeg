@@ -1,6 +1,6 @@
 """Unit-тесты для модуля констант async-ffmpeg."""
 
-from async_ffmpeg import _constants
+from aio_ffmpeg import _constants
 
 
 def test_constants_definitions() -> None:

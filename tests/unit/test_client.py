@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg.client import FFmpegClient
-from async_ffmpeg.exceptions import InvalidInputError
-from async_ffmpeg.progress import ProgressInfo
+from aio_ffmpeg.client import FFmpegClient
+from aio_ffmpeg.exceptions import InvalidInputError
+from aio_ffmpeg.progress import ProgressInfo
 
 
 @pytest.fixture

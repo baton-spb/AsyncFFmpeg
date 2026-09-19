@@ -4,8 +4,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient
-from async_ffmpeg.integration import extract_download_audio, process_download_result
+from aio_ffmpeg import FFmpegClient
+from aio_ffmpeg.integration import extract_download_audio, process_download_result
 
 
 async def main() -> None:

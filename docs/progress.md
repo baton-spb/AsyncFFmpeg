@@ -51,7 +51,7 @@ progress=continue
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from aio_ffmpeg import FFmpegClient, ProgressInfo
 
 
 async def main():

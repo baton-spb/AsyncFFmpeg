@@ -2,8 +2,8 @@
 
 import pytest
 
-from async_ffmpeg.command import FFmpegCommand
-from async_ffmpeg.hardware import (
+from aio_ffmpeg.command import FFmpegCommand
+from aio_ffmpeg.hardware import (
     DecoderInfo,
     EncoderInfo,
     HardwareAccel,

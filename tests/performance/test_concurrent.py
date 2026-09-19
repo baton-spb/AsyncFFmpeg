@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg import FFmpegCancelledError, FFmpegClient
+from aio_ffmpeg import FFmpegCancelledError, FFmpegClient
 
 
 @pytest.mark.asyncio

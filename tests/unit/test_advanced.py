@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg.client import FFmpegClient
-from async_ffmpeg.models import SilenceInterval
+from aio_ffmpeg.client import FFmpegClient
+from aio_ffmpeg.models import SilenceInterval
 
 
 @pytest.fixture

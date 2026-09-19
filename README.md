@@ -87,7 +87,7 @@ uv add aio-ffmpeg
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main() -> None:
@@ -113,7 +113,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from aio_ffmpeg import FFmpegClient, ProgressInfo
 
 
 async def main() -> None:
@@ -142,7 +142,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main() -> None:
@@ -166,8 +166,8 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
-from async_ffmpeg.integration import process_download_result
+from aio_ffmpeg import FFmpegClient
+from aio_ffmpeg.integration import process_download_result
 
 
 async def main() -> None:

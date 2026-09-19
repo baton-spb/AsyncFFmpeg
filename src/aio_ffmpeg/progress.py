@@ -10,7 +10,7 @@ import re
 from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
 
-from async_ffmpeg._types import ProgressCallback
+from aio_ffmpeg._types import ProgressCallback
 
 _BITRATE_REGEX = re.compile(r"([\d.]+)\s*kbits?/s", re.IGNORECASE)
 _SPEED_REGEX = re.compile(r"([\d.]+)x?", re.IGNORECASE)

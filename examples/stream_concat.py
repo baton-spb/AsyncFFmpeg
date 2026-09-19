@@ -3,7 +3,7 @@
 import asyncio
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from aio_ffmpeg import FFmpegClient, ProgressInfo
 
 
 async def _generate_segments(client: FFmpegClient, target_dir: Path) -> list[Path]:

@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg._discovery import find_ffmpeg
-from async_ffmpeg.command import FFmpegCommand
-from async_ffmpeg.exceptions import CommandBuildError
-from async_ffmpeg.progress import ProgressInfo
+from aio_ffmpeg._discovery import find_ffmpeg
+from aio_ffmpeg.command import FFmpegCommand
+from aio_ffmpeg.exceptions import CommandBuildError
+from aio_ffmpeg.progress import ProgressInfo
 
 
 def test_command_validation_empty_inputs() -> None:

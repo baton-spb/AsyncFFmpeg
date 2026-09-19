@@ -5,12 +5,12 @@ import sys
 
 import pytest
 
-from async_ffmpeg.exceptions import (
+from aio_ffmpeg.exceptions import (
     FFmpegCancelledError,
     FFmpegProcessError,
     FFmpegTimeoutError,
 )
-from async_ffmpeg.process import ProcessResult, ProcessRunner
+from aio_ffmpeg.process import ProcessResult, ProcessRunner
 
 
 def test_process_result_properties() -> None:

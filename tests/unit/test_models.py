@@ -1,6 +1,6 @@
 """Unit-тесты для моделей данных медиафайлов (models.py)."""
 
-from async_ffmpeg.models import (
+from aio_ffmpeg.models import (
     AudioStream,
     Chapter,
     MediaFormat,

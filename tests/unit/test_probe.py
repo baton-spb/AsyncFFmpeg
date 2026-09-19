@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from async_ffmpeg._discovery import find_ffmpeg
-from async_ffmpeg.exceptions import FFprobeError, InvalidInputError
-from async_ffmpeg.probe import FFprobe, parse_probe_json
+from aio_ffmpeg._discovery import find_ffmpeg
+from aio_ffmpeg.exceptions import FFprobeError, InvalidInputError
+from aio_ffmpeg.probe import FFprobe, parse_probe_json
 
 MOCK_PROBE_JSON = {
     "streams": [

@@ -3,7 +3,7 @@
 import asyncio
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient, HardwareAccel
+from aio_ffmpeg import FFmpegClient, HardwareAccel
 
 
 async def main() -> None:

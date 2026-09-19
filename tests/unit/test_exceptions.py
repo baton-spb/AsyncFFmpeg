@@ -1,6 +1,6 @@
 """Unit-тесты для иерархии исключений async-ffmpeg."""
 
-from async_ffmpeg.exceptions import (
+from aio_ffmpeg.exceptions import (
     AsyncFFmpegError,
     CodecNotFoundError,
     CommandBuildError,

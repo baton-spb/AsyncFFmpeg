@@ -33,7 +33,7 @@
 
 ```python
 import asyncio
-from async_ffmpeg import FFmpegClient
+from aio_ffmpeg import FFmpegClient
 
 
 async def main():
@@ -66,7 +66,7 @@ asyncio.run(main())
 ### 2.2 Low-level builder
 
 ```python
-from async_ffmpeg import FFmpegCommand
+from aio_ffmpeg import FFmpegCommand
 
 cmd = (
     FFmpegCommand()
@@ -91,7 +91,7 @@ result = await cmd.execute()
 ### 2.3 Прогресс с процентом
 
 ```python
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from aio_ffmpeg import FFmpegClient, ProgressInfo
 
 client = FFmpegClient()
 
@@ -463,7 +463,7 @@ async-yt-dlp  ←──(optional import)──  async-ffmpeg
 `async-ffmpeg` определяет Protocol, который async-yt-dlp может реализовать:
 
 ```python
-# В async_ffmpeg/_types.py
+# В aio_ffmpeg/_types.py
 from typing import Protocol
 
 
@@ -488,7 +488,7 @@ ytdlp = ["async-yt-dlp>=0.1.0"]
 
 В коде:
 ```python
-# async_ffmpeg/integration/__init__.py
+# aio_ffmpeg/integration/__init__.py
 try:
     from async_yt_dlp import DownloadResult as _YTDLPResult
 
