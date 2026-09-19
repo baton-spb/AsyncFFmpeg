@@ -5,6 +5,14 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
+from async_ffmpeg.enums import (
+    AudioCodec,
+    AudioFormat,
+    Resolution,
+    VideoCodec,
+    VideoContainer,
+)
+
 if TYPE_CHECKING:
     from async_ffmpeg.progress import ProgressInfo
 
@@ -106,3 +114,26 @@ class MediaInputProtocol(Protocol):
     def to_ffmpeg_input(self) -> str:
         """Преобразование в строковый аргумент пути или URL для FFmpeg."""
         ...
+
+
+__all__ = [
+    "AudioCodec",
+    "AudioFormat",
+    "CommandOptionValue",
+    "ConcatMethod",
+    "DownloadResultProtocol",
+    "FilterParamValue",
+    "LogLevel",
+    "MediaInputProtocol",
+    "PathLike",
+    "ProbeRawDict",
+    "ProgressCallback",
+    "Resolution",
+    "StderrCallback",
+    "StdoutLineCallback",
+    "StreamType",
+    "VideoCodec",
+    "VideoContainer",
+    "VideoPreset",
+    "WatermarkPosition",
+]

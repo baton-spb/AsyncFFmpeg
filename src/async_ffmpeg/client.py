@@ -35,11 +35,14 @@ from async_ffmpeg._constants import (
 from async_ffmpeg._discovery import find_ffmpeg
 from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import (
+    AudioCodec,
+    AudioFormat,
     CommandOptionValue,
     ConcatMethod,
     PathLike,
     ProgressCallback,
     StderrCallback,
+    VideoCodec,
     VideoPreset,
 )
 from async_ffmpeg.command import FFmpegCommand
@@ -203,8 +206,8 @@ class FFmpegClient:
         input: PathLike,  # noqa: A002
         output: PathLike,
         *,
-        video_codec: str | None = None,
-        audio_codec: str | None = None,
+        video_codec: VideoCodec | str | None = None,
+        audio_codec: AudioCodec | str | None = None,
         video_bitrate: str | None = None,
         audio_bitrate: str | None = None,
         resolution: tuple[int, int] | None = None,
@@ -231,6 +234,20 @@ class FFmpegClient:
         Если передан `on_progress`, клиент автоматически определяет общую длительность файла
         для отображения процентов выполнения (0.0% – 100.0%) и времени ETA.
         """
+        if crf is not None and not (0 <= crf <= 51):
+            raise ValueError(f"Параметр crf должен быть в диапазоне от 0 до 51, получено: {crf}")
+        if fps is not None and fps <= 0:
+            raise ValueError(f"Параметр fps должен быть > 0, получено: {fps}")
+        if resolution is not None:
+            w, h = resolution
+            if w <= 0 or h <= 0:
+                raise ValueError(
+                    f"Размеры кадра должны быть строго положительными, получено: {w}x{h}"
+                )
+        if isinstance(start, (int, float)) and start < 0:
+            raise ValueError(f"Параметр start должен быть >= 0 секунд, получено: {start}")
+        if isinstance(duration, (int, float)) and duration <= 0:
+            raise ValueError(f"Параметр duration должен быть > 0 секунд, получено: {duration}")
         calc_duration = total_duration
         if on_progress and calc_duration is None:
             if isinstance(duration, (int, float)):
@@ -330,7 +347,7 @@ class FFmpegClient:
         input: PathLike,  # noqa: A002
         output: PathLike,
         *,
-        codec: str = "aac",
+        codec: AudioCodec | AudioFormat | str = "aac",
         bitrate: str = DEFAULT_AUDIO_BITRATE,
         sample_rate: int | None = None,
         channels: int | None = None,
@@ -382,6 +399,14 @@ class FFmpegClient:
 
         Если `copy=True`, выполняется мгновенная обрезка через stream copy без перекодирования.
         """
+        if isinstance(start, (int, float)) and start < 0:
+            raise ValueError(f"Параметр start должен быть >= 0 секунд, получено: {start}")
+        if isinstance(duration, (int, float)) and duration <= 0:
+            raise ValueError(f"Параметр duration должен быть > 0 секунд, получено: {duration}")
+        if isinstance(start, (int, float)) and isinstance(end, (int, float)) and end <= start:
+            raise ValueError(
+                f"Конечная метка end ({end}) должна быть больше начальной start ({start})"
+            )
         input_opts: dict[str, CommandOptionValue] = {}
         if start is not None:
             input_opts["ss"] = start
@@ -688,16 +713,30 @@ class FFmpegClient:
         input: PathLike,  # noqa: A002
         output: PathLike,
         *,
-        width: int,
-        height: int,
-        video_codec: str = "libx264",
+        width: int | tuple[int, int],
+        height: int | None = None,
+        video_codec: VideoCodec | str = "libx264",
         crf: int = DEFAULT_VIDEO_CRF,
         preset: VideoPreset | str = DEFAULT_VIDEO_PRESET,
-        audio_codec: str = "copy",
+        audio_codec: AudioCodec | str = "copy",
         timeout: float | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> ProcessResult:
         """Масштабирует видео в заданное разрешение."""
+        if isinstance(width, tuple):
+            w, h = width
+        elif height is not None:
+            w, h = width, height
+        else:
+            raise ValueError(
+                "Необходимо указать высоту height или передать кортеж (ширина, высота)"
+            )
+
+        if w <= 0 or h <= 0:
+            raise ValueError(f"Размеры кадра должны быть строго положительными, получено: {w}x{h}")
+        if not (0 <= crf <= 51):
+            raise ValueError(f"Параметр crf должен быть в диапазоне от 0 до 51, получено: {crf}")
+
         total_duration = None
         if on_progress:
             total_duration = await self._resolve_duration_if_needed(input)
@@ -706,13 +745,13 @@ class FFmpegClient:
             self.create_command()
             .overwrite()
             .input(input)
-            .video_filter(scale(width, height))
+            .video_filter(scale(w, h))
             .video_codec(video_codec)
             .crf(crf)
             .preset(preset)
         )
 
-        if audio_codec == "copy":
+        if str(audio_codec) == "copy":
             cmd.copy_audio()
         else:
             cmd.audio_codec(audio_codec)
@@ -732,9 +771,9 @@ class FFmpegClient:
         input: PathLike,  # noqa: A002
         output: PathLike,
         *,
-        video_codec: str = "libx264",
+        video_codec: VideoCodec | str = "libx264",
         bitrate: str = "2000k",
-        audio_codec: str = "aac",
+        audio_codec: AudioCodec | str = "aac",
         audio_bitrate: str = DEFAULT_AUDIO_BITRATE,
         preset: VideoPreset | str = DEFAULT_VIDEO_PRESET,
         passlogfile: PathLike | None = None,

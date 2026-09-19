@@ -24,11 +24,13 @@ from typing import TYPE_CHECKING, Self
 from async_ffmpeg._discovery import find_ffmpeg, find_ffprobe
 from async_ffmpeg._logging import get_logger
 from async_ffmpeg._types import (
+    AudioCodec,
     CommandOptionValue,
     MediaInputProtocol,
     PathLike,
     ProgressCallback,
     StderrCallback,
+    VideoCodec,
     VideoPreset,
     WatermarkPosition,
 )
@@ -232,11 +234,20 @@ class MediaPipeline:
         """Задает диапазон обрезки медиафайла.
 
         Args:
-            start: Начало фрагмента в секундах или формате "HH:MM:SS".
+            start: Начало фрагмента в секундах (>= 0) или формате "HH:MM:SS".
             end: Конец фрагмента.
-            duration: Длительность фрагмента.
+            duration: Длительность фрагмента (> 0).
             fast_seek: Использовать быстрый поиск перед -i (True) или точный после -i (False).
         """
+        if isinstance(start, (int, float)) and start < 0:
+            raise ValueError(f"Параметр start должен быть >= 0 секунд, получено: {start}")
+        if isinstance(duration, (int, float)) and duration <= 0:
+            raise ValueError(f"Параметр duration должен быть > 0 секунд, получено: {duration}")
+        if isinstance(start, (int, float)) and isinstance(end, (int, float)) and end <= start:
+            raise ValueError(
+                f"Конечная метка end ({end}) должна быть больше начальной start ({start})"
+            )
+
         self._start = start
         self._end = end
         self._duration = duration
@@ -260,17 +271,36 @@ class MediaPipeline:
 
     def scale(
         self,
-        width: int,
-        height: int,
+        width: int | tuple[int, int],
+        height: int | None = None,
         *,
         keep_aspect_ratio: bool = False,
         force_original_aspect_ratio: str | None = None,
     ) -> Self:
-        """Изменяет разрешение видео."""
+        """Изменяет разрешение видео.
+
+        Args:
+            width: Ширина кадра или кортеж (ширина, высота), например `Resolution.HD_720P`.
+            height: Высота кадра (не требуется, если передан кортеж в `width`).
+            keep_aspect_ratio: Сохранять соотношение сторон.
+            force_original_aspect_ratio: Режим сохранения пропорций.
+        """
+        if isinstance(width, tuple):
+            w, h = width
+        elif height is not None:
+            w, h = width, height
+        else:
+            raise ValueError(
+                "Необходимо указать высоту height или передать кортеж (ширина, высота)"
+            )
+
+        if w <= 0 or h <= 0:
+            raise ValueError(f"Размеры кадра должны быть строго положительными, получено: {w}x{h}")
+
         force = force_original_aspect_ratio
         if keep_aspect_ratio and force is None:
             force = "decrease"
-        self._video_filters.append(scale_filter(width, height, force_original_aspect_ratio=force))
+        self._video_filters.append(scale_filter(w, h, force_original_aspect_ratio=force))
         return self
 
     def crop(
@@ -439,14 +469,17 @@ class MediaPipeline:
 
     def video_codec(
         self,
-        codec: str,
+        codec: VideoCodec | str,
         *,
         preset: VideoPreset | str | None = None,
         crf: int | None = None,
         bitrate: str | int | None = None,
     ) -> Self:
         """Задает параметры кодирования видеопотока."""
-        self._video_codec = codec
+        if crf is not None and not (0 <= crf <= 51):
+            raise ValueError(f"Параметр crf должен быть в диапазоне от 0 до 51, получено: {crf}")
+
+        self._video_codec = str(codec)
         if preset is not None:
             self._video_preset = preset
         if crf is not None:
@@ -457,14 +490,14 @@ class MediaPipeline:
 
     def audio_codec(
         self,
-        codec: str,
+        codec: AudioCodec | str,
         *,
         bitrate: str | int | None = None,
         sample_rate: int | None = None,
         channels: int | None = None,
     ) -> Self:
         """Задает параметры кодирования аудиопотока."""
-        self._audio_codec = codec
+        self._audio_codec = str(codec)
         if bitrate is not None:
             self._audio_bitrate = bitrate
         if sample_rate is not None:
@@ -494,7 +527,16 @@ class MediaPipeline:
         return self
 
     def crf(self, value: int) -> Self:
-        """Задает фактор качества (-crf)."""
+        """Задает фактор качества (-crf).
+
+        Args:
+            value: Значение CRF от 0 до 51.
+
+        Raises:
+            ValueError: Если значение CRF выходит за пределы 0..51.
+        """
+        if not (0 <= value <= 51):
+            raise ValueError(f"Параметр crf должен быть в диапазоне от 0 до 51, получено: {value}")
         self._video_crf = value
         return self
 

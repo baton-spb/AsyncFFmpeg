@@ -12,12 +12,14 @@ from async_ffmpeg._compat import normalize_path_for_ffmpeg
 from async_ffmpeg._constants import DEFAULT_LOGLEVEL, DEFAULT_STATS_PERIOD
 from async_ffmpeg._discovery import find_ffmpeg
 from async_ffmpeg._types import (
+    AudioCodec,
     CommandOptionValue,
     LogLevel,
     MediaInputProtocol,
     PathLike,
     ProgressCallback,
     StderrCallback,
+    VideoCodec,
     VideoPreset,
 )
 from async_ffmpeg.exceptions import CommandBuildError
@@ -188,16 +190,16 @@ class FFmpegCommand:
 
     # === Опции выходных потоков (применяются к следующему output()) ===
 
-    def video_codec(self, codec: str, stream_spec: str | None = None) -> Self:
+    def video_codec(self, codec: VideoCodec | str, stream_spec: str | None = None) -> Self:
         """Устанавливает видеокодек (-c:v или -c:v:X)."""
         opt = f"-c:v:{stream_spec}" if stream_spec else "-c:v"
-        self._pending_output_options.append((opt, codec))
+        self._pending_output_options.append((opt, str(codec)))
         return self
 
-    def audio_codec(self, codec: str, stream_spec: str | None = None) -> Self:
+    def audio_codec(self, codec: AudioCodec | str, stream_spec: str | None = None) -> Self:
         """Устанавливает аудиокодек (-c:a или -c:a:X)."""
         opt = f"-c:a:{stream_spec}" if stream_spec else "-c:a"
-        self._pending_output_options.append((opt, codec))
+        self._pending_output_options.append((opt, str(codec)))
         return self
 
     def subtitle_codec(self, codec: str, stream_spec: str | None = None) -> Self:
@@ -245,17 +247,52 @@ class FFmpegCommand:
         return self
 
     def crf(self, value: int) -> Self:
-        """Устанавливает фактор постоянного качества (-crf)."""
+        """Устанавливает фактор постоянного качества (-crf).
+
+        Args:
+            value: Значение CRF в диапазоне от 0 (lossless) до 51 (наихудшее).
+
+        Raises:
+            ValueError: Если значение выходит за диапазон 0..51.
+        """
+        if not (0 <= value <= 51):
+            raise ValueError(f"Параметр crf должен быть в диапазоне от 0 до 51, получено: {value}")
         self._pending_output_options.append(("-crf", str(value)))
         return self
 
-    def resolution(self, width: int, height: int) -> Self:
-        """Устанавливает выходное разрешение (-s WxH)."""
-        self._pending_output_options.append(("-s", f"{width}x{height}"))
+    def resolution(self, width: int | tuple[int, int], height: int | None = None) -> Self:
+        """Устанавливает выходное разрешение (-s WxH).
+
+        Args:
+            width: Ширина кадра или кортеж (ширина, высота), например `Resolution.HD_720P`.
+            height: Высота кадра (не требуется, если передан кортеж в `width`).
+
+        Raises:
+            ValueError: Если высота не указана или размеры кадра <= 0.
+        """
+        if isinstance(width, tuple):
+            w, h = width
+        elif height is not None:
+            w, h = width, height
+        else:
+            raise ValueError(
+                "Необходимо указать высоту height или передать кортеж (ширина, высота)"
+            )
+
+        if w <= 0 or h <= 0:
+            raise ValueError(f"Размеры кадра должны быть строго положительными, получено: {w}x{h}")
+
+        self._pending_output_options.append(("-s", f"{w}x{h}"))
         return self
 
     def fps(self, rate: float | int) -> Self:
-        """Устанавливает частоту кадров вывода (-r)."""
+        """Устанавливает частоту кадров вывода (-r).
+
+        Raises:
+            ValueError: Если частота кадров <= 0.
+        """
+        if rate <= 0:
+            raise ValueError(f"Частота кадров (fps) должна быть > 0, получено: {rate}")
         self._pending_output_options.append(("-r", str(rate)))
         return self
 
@@ -263,12 +300,14 @@ class FFmpegCommand:
         """Устанавливает лимит количества кадров для вывода (-vframes, -aframes).
 
         Args:
-            count: Количество кадров.
+            count: Количество кадров (> 0).
             stream_type: Тип потока ('v' для видео, 'a' для аудио).
 
-        Returns:
-            Экземпляр FFmpegCommand для цепочки вызовов.
+        Raises:
+            ValueError: Если количество кадров <= 0.
         """
+        if count <= 0:
+            raise ValueError(f"Количество кадров должно быть > 0, получено: {count}")
         opt = f"-{stream_type}frames"
         self._pending_output_options.append((opt, str(count)))
         return self
