@@ -1,5 +1,10 @@
 """async-ffmpeg — асинхронная, строго типизированная библиотека-обёртка над FFmpeg и FFprobe."""
 
+from async_ffmpeg._compat import (
+    escape_filter_path,
+    normalize_path_for_ffmpeg,
+    terminate_process_gracefully,
+)
 from async_ffmpeg._constants import (
     DEFAULT_AUDIO_BITRATE,
     DEFAULT_FFMPEG_EXECUTABLE,
@@ -10,6 +15,17 @@ from async_ffmpeg._constants import (
     DEFAULT_VIDEO_CRF,
     DEFAULT_VIDEO_PRESET,
     __version__,
+)
+from async_ffmpeg._discovery import (
+    BinaryInfo,
+    clear_discovery_cache,
+    find_binary,
+    find_ffmpeg,
+    find_ffprobe,
+    get_binary_version,
+    get_binary_version_sync,
+    get_ffmpeg_info,
+    get_ffprobe_info,
 )
 from async_ffmpeg._types import (
     ConcatMethod,
@@ -45,6 +61,7 @@ __all__ = [
     "DEFAULT_VIDEO_CRF",
     "DEFAULT_VIDEO_PRESET",
     "AsyncFFmpegError",
+    "BinaryInfo",
     "CodecNotFoundError",
     "CommandBuildError",
     "ConcatMethod",
@@ -64,4 +81,15 @@ __all__ = [
     "StreamType",
     "VideoPreset",
     "__version__",
+    "clear_discovery_cache",
+    "escape_filter_path",
+    "find_binary",
+    "find_ffmpeg",
+    "find_ffprobe",
+    "get_binary_version",
+    "get_binary_version_sync",
+    "get_ffmpeg_info",
+    "get_ffprobe_info",
+    "normalize_path_for_ffmpeg",
+    "terminate_process_gracefully",
 ]
