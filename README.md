@@ -1,90 +1,89 @@
-# async-ffmpeg
+# aio-ffmpeg
 
 [![CI](https://github.com/baton-spb/AsyncFFmpeg/actions/workflows/ci.yml/badge.svg)](https://github.com/baton-spb/AsyncFFmpeg/actions)
-[![PyPI version](https://img.shields.io/pypi/v/async-ffmpeg.svg)](https://pypi.org/project/async-ffmpeg/)
+[![PyPI version](https://img.shields.io/pypi/v/aio-ffmpeg.svg)](https://pypi.org/project/aio-ffmpeg/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Typing: Typed](https://img.shields.io/badge/typing-typed-green.svg)](https://peps.python.org/pep-0561/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**async-ffmpeg** — современная, строго типизированная, production-ready асинхронная библиотека-обёртка над `ffmpeg` и `ffprobe` для Python 3.11+.
+Строго типизированная асинхронная обёртка над `ffmpeg` и `ffprobe` для Python 3.11+.
 
-Она построена непосредственно поверх `asyncio.create_subprocess_exec()` без сторонних C-библиотек, без устаревших binding-ов и с **нулевыми зависимостями времени выполнения** (zero runtime dependencies, только стандартная библиотека Python).
+Процессы запускаются через `asyncio.create_subprocess_exec()`. Нет зависимостей времени выполнения — только стандартная библиотека Python.
 
 ---
 
 ## Сравнение с аналогами
 
-| Возможность | `async-ffmpeg` | `ffmpeg-python` | `moviepy` | `subprocess` (ручной) |
+| Возможность | `aio-ffmpeg` | `ffmpeg-python` | `moviepy` | `subprocess` |
 |:---|:---:|:---:|:---:|:---:|
-| **Нативная асинхронность (`asyncio`)** | **Да** | Нет | Нет | Требует ручной реализации |
-| **Зависимости времени выполнения** | **0 (только stdlib)** | 2 | 10+ (тяжёлые) | 0 |
-| **Строгая типизация (`mypy --strict`)** | **100% (Zero Any)** | Нет типов | Частичная | Нет |
-| **Парсинг прогресса в реальном времени** | **Да (`-progress pipe:1`)** | Нет | Tqdm (базовый) | Ручной парсинг |
-| **Безопасная остановка (Graceful Shutdown)** | **Да (`q\n` -> SIGINT)** | Нет | Нет | Нет |
-| **Многоуровневый API (Facade / Pipeline / Builder)** | **Да** | Только builder | Только facade | Нет |
-| **Автоопределение GPU (CUDA/AMF/QSV/Toolbox)** | **Да** | Нет | Нет | Нет |
-| **Поддержка современного Python 3.14+** | **Да** | Заброшен | Медленный | Да |
+| Асинхронность (`asyncio`) | Да | Нет | Нет | Ручная реализация |
+| Зависимости runtime | 0 (stdlib) | 2 | 10+ | 0 |
+| Строгая типизация (`mypy --strict`) | Да | Нет | Частичная | Нет |
+| Парсинг прогресса | Да (`-progress pipe:1`) | Нет | Tqdm | Ручной |
+| Graceful shutdown | Да (`q\n` → SIGINT) | Нет | Нет | Нет |
+| Автоопределение GPU | Да (NVENC/AMF/QSV/VideoToolbox) | Нет | Нет | Нет |
 
 ---
 
-## Ключевые возможности
+## Возможности
 
-- **Полноценная асинхронность**: неблокирующий запуск процессов через `asyncio.create_subprocess_exec()`, контроль конкурентности через `asyncio.Semaphore`.
-- **Строгая типизация**: 100% соответствие `mypy --strict` и `Zero Any policy`, frozen dataclass-модели со `slots=True`, маркер PEP 561 (`py.typed`).
-- **Машиночитаемый прогресс**: чтение и потоковый разбор протокола `-progress pipe:1` (кадры, время, битрейт, скорость кодирования, процент выполнения).
-- **Graceful Shutdown**: предотвращение повреждения медиафайлов (битых заголовков MP4 / unclosed `moov` atom) путём отправки `q` в stdin перед отправкой системных сигналов завершения.
-- **Трёхуровневый API**:
-  - **Facade (`FFmpegClient`)**: готовые методы для решения 95% повседневных задач.
-  - **Pipeline (`MediaPipeline`)**: декларативный конвейер цепочек обработки видео и аудио.
-  - **Command Builder (`FFmpegCommand`)**: строгий конструктор аргументов CLI с контролем порядка и валидацией конфликтов.
-- **Типизированный FFprobe**: детальный разбор контейнеров, видео/аудио/субтитр-потоков, глав и метаданных.
-- **Аппаратное ускорение**: автоопределение и конфигурация NVENC, AMF, QSV, D3D11VA, VideoToolbox.
-- **Интеграция с `async-yt-dlp`**: бесшовный конвейер загрузки и последующей обработки медиафайлов.
+- **Асинхронный запуск процессов**: `asyncio.create_subprocess_exec()`, контроль конкурентности через `asyncio.Semaphore`.
+- **Типизация**: frozen dataclass-модели со `slots=True`, PEP 561 `py.typed`, `mypy --strict`.
+- **Прогресс**: потоковый разбор протокола `-progress pipe:1` (кадры, время, битрейт, скорость, процент).
+- **Graceful shutdown**: отправка `q` в stdin перед системными сигналами завершения. Предотвращает повреждение заголовков MP4.
+- **Три уровня API**:
+  - `FFmpegClient` — готовые методы для типовых задач.
+  - `MediaPipeline` — декларативный конвейер цепочек обработки.
+  - `FFmpegCommand` — построитель аргументов CLI с валидацией.
+- **FFprobe**: типизированный разбор контейнеров, видео/аудио/субтитр-потоков, глав и метаданных.
+- **Аппаратное ускорение**: автоопределение NVENC, AMF, QSV, D3D11VA, VideoToolbox.
+- **Интеграция с `async-yt-dlp`**: конвейер загрузки и постобработки медиафайлов.
 
 ---
 
-## Методы высокоуровневого клиента (`FFmpegClient`)
+## Методы `FFmpegClient`
 
 | Метод | Назначение |
 |:---|:---|
-| `transcode(...)` | Универсальное перекодирование с контролем кодеков, битрейта, разрешения, FPS и фильтров. |
-| `extract_audio(...)` | Извлечение аудиодорожки (`-vn`) с конвертацией в AAC, MP3, FLAC, OPUS или WAV. |
-| `trim(...)` | Быстрая обрезка медиафрагментов по меткам времени (со stream copy или перекодированием). |
-| `concat(...)` | Склейка нескольких файлов без перекодирования (demuxer) или через граф фильтров. |
-| `screenshot(...)` | Извлечение одного кадра в указанной временной метке в высоком качестве. |
-| `thumbnails(...)` | Серийная генерация миниатюр по фиксированному интервалу, общему числу или частоте кадров. |
-| `convert(...)` | Быстрая смена контейнера (remuxing, например MKV -> MP4) со stream copy. |
-| `normalize_audio(...)` | Двухпроходная нормализация громкости по вещательному стандарту EBU R128 (`loudnorm`). |
-| `scale(...)` | Масштабирование видеоряда с сохранением исходной аудиодорожки без перекодирования. |
-| `two_pass_transcode(...)` | Двухпроходное кодирование с контролем битрейта и автоматической очисткой временных логов. |
-| `create_contact_sheet(...)` | Сборка раскадровки (storyboard/contact sheet) в виде сетки миниатюр (`tile`). |
-| `detect_silence(...)` | Детектирование тишины и пауз в аудиодорожке с получением интервалов (`SilenceInterval`). |
-| `probe(...)` | Детальный анализ метаданных файла или потока с возвратом типизированного `MediaInfo`. |
+| `transcode(...)` | Перекодирование с контролем кодеков, битрейта, разрешения, FPS и фильтров |
+| `two_pass_transcode(...)` | Двухпроходное кодирование с контролем битрейта |
+| `extract_audio(...)` | Извлечение аудиодорожки (`-vn`) в AAC, MP3, FLAC, OPUS, WAV |
+| `trim(...)` | Обрезка по меткам времени (stream copy или перекодирование) |
+| `concat(...)` | Склейка файлов через demuxer или граф фильтров |
+| `convert(...)` | Смена контейнера (remuxing, stream copy) |
+| `scale(...)` | Масштабирование видео |
+| `normalize_audio(...)` | Двухпроходная нормализация по EBU R128 (фильтр `loudnorm`) |
+| `screenshot(...)` | Извлечение кадра по временной метке |
+| `thumbnails(...)` | Генерация миниатюр по интервалу, количеству или частоте кадров |
+| `create_contact_sheet(...)` | Раскадровка — сетка миниатюр (`tile`) |
+| `detect_silence(...)` | Обнаружение тишины и пауз (`SilenceInterval`) |
+| `probe(...)` | Анализ метаданных файла → типизированный `MediaInfo` |
+| `pipeline(...)` | Создание `MediaPipeline` для декларативной обработки |
 
 ---
 
 ## Установка
 
+Требуется Python **3.11+**, установленные в системе `ffmpeg` и `ffprobe` (в `PATH` или через аргументы клиента / переменную `FFMPEG_PATH`).
+
 ```bash
-# Базовая установка (zero external dependencies)
-uv add async-ffmpeg
+# Базовая установка (без runtime-зависимостей):
+pip install aio-ffmpeg
 
-# Или через pip:
-pip install async-ffmpeg
-
-# С опциональной поддержкой интеграции с async-yt-dlp
-pip install "async-ffmpeg[ytdlp]"
+# С интеграцией с async-yt-dlp:
+pip install "aio-ffmpeg[ytdlp]"
 ```
 
-Требования:
-- Python >= 3.14
-- Установленный в системе `ffmpeg` и `ffprobe` (в `PATH` или указанный через аргументы клиента / переменную `FFMPEG_PATH`)
+Или через `uv`:
+```bash
+uv add aio-ffmpeg
+```
 
 ---
 
 ## Быстрый старт
 
-### 1. Анализ медиафайла (`FFprobe`)
+### 1. Анализ медиафайла
 
 ```python
 import asyncio
@@ -110,7 +109,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-### 2. Транскодирование с отслеживанием прогресса
+### 2. Транскодирование с прогрессом
 
 ```python
 import asyncio
@@ -133,7 +132,7 @@ async def main() -> None:
         audio_bitrate="128k",
         on_progress=on_progress,
     )
-    print(f"Готово за {result.duration_seconds:.2f} сек!")
+    print(f"Готово за {result.duration_seconds:.2f} сек")
 
 
 asyncio.run(main())
@@ -149,7 +148,7 @@ from async_ffmpeg import FFmpegClient
 async def main() -> None:
     client = FFmpegClient()
 
-    # Цепочка: обрезка -> масштабирование -> нормализация звука -> вывод
+    # обрезка → масштабирование → нормализация звука → вывод
     await (
         client.pipeline("input.mp4")
         .trim(start=10, duration=60)
@@ -163,7 +162,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-### 4. Интеграция с загрузчиком (`async-yt-dlp`)
+### 4. Интеграция с `async-yt-dlp`
 
 ```python
 import asyncio
@@ -172,11 +171,9 @@ from async_ffmpeg.integration import process_download_result
 
 
 async def main() -> None:
-    # Загрузка через yt-dlp (или совместимый объект с протоколом DownloadResultProtocol)
-    # Предположим, результат загрузки сохранён в download_result
     client = FFmpegClient()
 
-    # Автоматическое извлечение аудиодорожки или конвертация
+    # download_result — объект с протоколом DownloadResultProtocol
     post_result = await process_download_result(
         download_result,
         action="extract_audio",
@@ -184,7 +181,7 @@ async def main() -> None:
         audio_format="mp3",
         audio_bitrate="320k",
     )
-    print(f"Обработано: {post_result.output_path}")
+    print(f"Результат: {post_result.output_path}")
 
 
 asyncio.run(main())
@@ -192,47 +189,34 @@ asyncio.run(main())
 
 ---
 
-## Примеры использования (`examples/`)
+## Примеры
 
-В каталоге [`examples/`](examples/) содержатся готовые исполняемые сценарии:
+В каталоге [`examples/`](examples/) — готовые примеры:
 
-1. [`simple_transcode.py`](examples/simple_transcode.py) — Базовое перекодирование с отслеживанием прогресса в реальном времени.
-2. [`extract_audio.py`](examples/extract_audio.py) — Извлечение звуковых дорожек в форматах MP3, AAC, FLAC и нормализация звука.
-3. [`video_thumbnails.py`](examples/video_thumbnails.py) — Снятие скриншотов, серийная генерация миниатюр и раскадровка (contact sheet).
-4. [`watermark_and_filters.py`](examples/watermark_and_filters.py) — Наложение водяных знаков и комплексных графов фильтров через `MediaPipeline`.
-5. [`stream_concat.py`](examples/stream_concat.py) — Склейка медиафайлов через демультиплексор (demuxer) и фильтр объединения.
-6. [`hardware_acceleration.py`](examples/hardware_acceleration.py) — Автоматическое обнаружение GPU и кодирование с аппаратным ускорением.
-7. [`ytdlp_pipeline.py`](examples/ytdlp_pipeline.py) — Полный конвейер скачивания и последующей обработки с `async-yt-dlp`.
-
----
-
-## Архитектура и документация
-
-Подробная проектная документация доступна в каталоге [`docs/`](docs/):
-
-- [`architecture.md`](docs/architecture.md) — Системная архитектура, слои абстракции, управление процессами.
-- [`api-design.md`](docs/api-design.md) — Детальное описание публичного API и сигнатур.
-- [`research.md`](docs/research.md) — Исследование поведения FFmpeg CLI, протокола `-progress` и кодов возврата.
-- [`pipeline.md`](docs/pipeline.md) — Руководство по работе с `MediaPipeline`.
-- [`hardware.md`](docs/hardware.md) — Конфигурация и использование аппаратного ускорения (GPU).
-- [`integration.md`](docs/integration.md) — Взаимодействие с внешними загрузчиками и `async-yt-dlp`.
+- [`simple_transcode.py`](examples/simple_transcode.py) — перекодирование с прогрессом
+- [`extract_audio.py`](examples/extract_audio.py) — извлечение звуковых дорожек
+- [`video_thumbnails.py`](examples/video_thumbnails.py) — скриншоты, миниатюры, раскадровка
+- [`watermark_and_filters.py`](examples/watermark_and_filters.py) — водяные знаки и фильтры через `MediaPipeline`
+- [`stream_concat.py`](examples/stream_concat.py) — склейка медиафайлов
+- [`hardware_acceleration.py`](examples/hardware_acceleration.py) — кодирование с аппаратным ускорением
+- [`ytdlp_pipeline.py`](examples/ytdlp_pipeline.py) — конвейер с `async-yt-dlp`
 
 ---
 
-## Разработка и тестирование
+## Разработка
 
 ```bash
-# Установка dev-окружения
+# Dev-окружение
 uv sync --extra dev
 
-# Проверка форматирования и линтинга
-uv run ruff check src/ tests/ examples/ docs/
-uv run ruff format --check src/ tests/ examples/ docs/
+# Линтинг
+uv run ruff check src/ tests/
+uv run ruff format --check src/ tests/
 
-# Проверка строгой статической типизации
+# Типизация
 uv run mypy src/
 
-# Запуск тестов
+# Тесты
 uv run pytest tests/ -v
 ```
 
