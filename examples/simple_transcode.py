@@ -4,7 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from async_ffmpeg import AudioCodec, FFmpegClient, ProgressInfo, Resolution, VideoCodec
 
 
 def _render_progress_bar(progress: ProgressInfo) -> str:
@@ -95,10 +95,10 @@ async def main() -> None:
     result = await client.transcode(
         input=input_path,
         output=output_path,
-        video_codec="libx264",
+        video_codec=VideoCodec.H264,
         crf=23,
-        resolution=(1280, 720),
-        audio_codec="aac",
+        resolution=Resolution.HD_720P,
+        audio_codec=AudioCodec.AAC,
         audio_bitrate="128k",
         on_progress=on_progress,
     )

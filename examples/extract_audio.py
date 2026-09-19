@@ -4,7 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from async_ffmpeg import FFmpegClient, ProgressInfo
+from async_ffmpeg import AudioCodec, FFmpegClient, ProgressInfo
 
 
 async def _ensure_input_file(client: FFmpegClient, target_dir: Path) -> Path:
@@ -78,7 +78,7 @@ async def main() -> None:
     result = await client.extract_audio(
         input=input_path,
         output=output_mp3,
-        codec="libmp3lame",
+        codec=AudioCodec.MP3,
         bitrate="192k",
         on_progress=on_progress,
     )

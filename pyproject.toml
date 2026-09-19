@@ -41,7 +41,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-async-yt-dlp = { path = "../AsyncYT-DLP" }
+async-yt-dlp = { path = "../AsyncYTDLP" }
 
 
 [project.urls]
